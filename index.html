@@ -219,9 +219,19 @@
             document.getElementById('val-dob').innerText = new Date(state.birthDate).toLocaleDateString();
             
             const treatBtn = document.getElementById('btn-treat');
-            if (state.stage === 'larva') treatBtn.innerText = "💧 Feed Royal Jelly";
-            else if (state.stage === 'adult') treatBtn.innerText = "💧 Sugar Water";
-            else treatBtn.innerText = "💧 Food (Waiting to hatch)";
+            const seedBtn = document.getElementById('btn-seed');
+            if (state.stage === 'larva') { 
+                treatBtn.innerText = "💧 Feed Royal Jelly"; 
+                seedBtn.style.opacity = '0.5'; 
+            }
+            else if (state.stage === 'adult') { 
+                treatBtn.innerText = "💧 Sugar Water"; 
+                seedBtn.style.opacity = '1.0'; 
+            }
+            else { 
+                treatBtn.innerText = "💧 Food (Waiting to hatch)"; 
+                seedBtn.style.opacity = '0.5'; 
+            }
             
             // Cap at 10 babies
             const expectedChildren = Math.min(10, Math.floor(state.stats.honeyJars / 1000));
@@ -616,11 +626,10 @@
             beeMaster.scale.set(0.5, 0.5, 0.5); 
             
             if (state.stage === 'egg') {
-                // FIXED: Smaller, perfectly smooth golden egg without any extra spots.
                 const eggMat = new THREE.MeshStandardMaterial({color: 0xffd700, emissive: 0x886600, roughness: 0.2, metalness: 0.5});
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
-                egg.scale.set(0.85, 1.2, 0.85); // classic egg shape
-                egg.position.set(0, 1.8, 0); // Lowered so it sits perfectly in the grass
+                egg.scale.set(0.85, 1.2, 0.85); 
+                egg.position.set(0, 1.8, 0); 
                 egg.castShadow = true;
                 
                 beeGroup.add(egg);
@@ -697,7 +706,6 @@
             applyBeeCustomization();
         }
         
-        // PERFECTLY CLEAR BUBBLE: Allows dragging without blocking views
         const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 }));
         beeHitBox.position.set(0, 3.5, 0);
         beeMaster.add(beeHitBox);
@@ -804,6 +812,7 @@
         let isDraggingEgg = false;
 
         document.getElementById('btn-seed').addEventListener('click', () => {
+            if (state.stage !== 'adult') { logUI("Only fully grown bees can help grow seeds! 🌱"); return; }
             if (state.seeds.length >= 4) { logUI("You already have 4 magic seeds growing! 🌱"); return; }
             isPlantingSeed = true; document.body.classList.add('cursor-plant'); logUI(`Tap anywhere to plant a seed! (${state.seeds.length}/4 planted)`);
         });
@@ -929,7 +938,9 @@
                     return; 
                 }
             }
-            if (state.isSleeping) return;
+            
+            // Fixed: No dropping normal flowers unless she's a fully grown adult!
+            if (state.isSleeping || state.stage !== 'adult') return; 
             
             const intersectPoint = new THREE.Vector3(); 
             const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
@@ -984,20 +995,26 @@
             statDecayTimer += dt;
             if(statDecayTimer > 1.0) {
                 statDecayTimer = 0;
-                if (state.stage !== 'egg') {
+                // Fixed: Only adult bees and larvae get exhausted! Eggs stay healthy at 100%.
+                if (state.stage === 'adult' || state.stage === 'larva') {
                     if (state.isSleeping) {
                         state.stats.energy += 5.0; state.stats.hunger -= 0.2; state.stats.tiredness -= 5.0; 
-                        if (state.stage === 'adult' && state.stats.nectar >= 1) { state.stats.nectar -= 1; state.stats.honeyJars += 0.2; if (Math.abs(state.stats.honeyJars % 1) < 0.19) spawnFloatingEmoji('🍯', hiveDoorTarget); }
+                        if (state.stats.nectar >= 1) { state.stats.nectar -= 1; state.stats.honeyJars += 0.2; if (Math.abs(state.stats.honeyJars % 1) < 0.19) spawnFloatingEmoji('🍯', hiveDoorTarget); }
                     } else {
                         state.stats.energy -= 0.8; state.stats.hunger -= 1.5; state.stats.tiredness += 1.2; 
                         if (state.stats.hunger < 30 || state.stats.energy < 20) state.stats.happiness -= 2.0; else if (state.stats.happiness < 100) state.stats.happiness += 0.5;
                         if (state.stats.tiredness > 75 && time - lastSleepPrompt > 20) { logUI(`${state.name} is getting very tired. 🥱 Tap the hive for bedtime?`); lastSleepPrompt = time; }
                     }
-                    updateStatsUI();
-                    if (!state.isSleeping && state.stage === 'adult' && state.hiveUnlocked) {
+                    if (!state.isSleeping && state.hiveUnlocked) {
                         if (state.stats.nectar >= 5) { logUI(`${state.name}'s pollen baskets are full! Returning to hive.`); targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true; }
                     }
+                } else if (state.stage === 'egg') {
+                    state.stats.energy = 100;
+                    state.stats.hunger = 100;
+                    state.stats.tiredness = 0;
+                    state.stats.happiness = 100;
                 }
+                updateStatsUI();
             }
 
             if (state.isSleeping && beeMaster.position.distanceTo(hiveDoorTarget) < 2.0) {
@@ -1077,7 +1094,7 @@
             } else if (state.stage === 'larva') { 
                 beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.2; 
             } else if (state.stage === 'egg') {
-                beeGroup.position.y = 1.0 + Math.sin(time * 3) * 0.3; // Lowered height & gentle bounce
+                beeGroup.position.y = 1.0 + Math.sin(time * 3) * 0.3; 
                 beeGroup.rotation.z = Math.sin(time * 4) * 0.1;
                 beeGroup.rotation.x = Math.sin(time * 3.5) * 0.1;
             }
