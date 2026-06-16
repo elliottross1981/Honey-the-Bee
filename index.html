@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
-
         body {
             font-family: 'Nunito', sans-serif;
             margin: 0;
@@ -19,18 +18,15 @@
             user-select: none;
             -webkit-user-select: none;
         }
-
         /* Weather Overrides */
         body.raining { background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%) !important; }
         body.night-mode { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important; }
-
         #canvas-container {
             position: absolute;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: 10;
         }
-
         .glass {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
@@ -46,11 +42,9 @@
         }
         body.night-mode .text-slate-600, body.raining .text-slate-600 { color: #cbd5e1; }
         body.night-mode h1, body.raining h1 { color: #fcd34d; }
-
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-
         @keyframes floatUpAndFade {
             0% { transform: translateY(0) scale(0.8); opacity: 0; }
             20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
@@ -72,21 +66,27 @@
     </style>
 </head>
 <body class="w-screen h-screen relative text-slate-800" id="main-body">
-
     <div id="canvas-container"></div>
 
-    <!-- UI Overlay -->
-    <div class="absolute top-4 left-4 right-4 md:right-auto md:w-80 flex flex-col gap-3 z-40 pointer-events-none">
+    <!-- TOP BAR: Menu Toggle & Audio (Floating independently) -->
+    <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-50 pointer-events-none">
+        <button id="btn-toggle-menu" class="pointer-events-auto glass px-4 py-2 rounded-full font-bold text-amber-700 shadow-md text-sm flex items-center gap-2 active:scale-95 transition">
+            📊 Stats & Menu
+        </button>
+        <button id="toggle-audio" class="pointer-events-auto p-2 rounded-full bg-white/50 hover:bg-white/80 transition-colors shadow-sm text-lg active:scale-95" title="Toggle Buzz Sound">
+            🔇
+        </button>
+    </div>
+
+    <!-- MOBILE-FRIENDLY DASHBOARD (Hidden by default on phones) -->
+    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-none max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity">
         
         <!-- Stats Panel -->
         <div class="glass rounded-2xl p-4 pointer-events-auto shadow-lg">
             <div class="flex justify-between items-center mb-1">
                 <h1 class="text-xl font-bold text-amber-700 flex items-center gap-2">
-                    🐝 Honey's Dashboard
+                    🐝 Honey's Stats
                 </h1>
-                <button id="toggle-audio" class="p-2 rounded-full bg-white/50 hover:bg-white/80 transition-colors shadow-sm" title="Toggle Buzz Sound">
-                    🔇
-                </button>
             </div>
             
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-black/10">
@@ -127,7 +127,6 @@
                         <div id="bar-tiredness" class="h-full bg-blue-400 rounded-full transition-all duration-300 w-0"></div>
                     </div>
                 </div>
-
                 <div class="pt-2 border-t border-black/10 flex justify-between items-center">
                     <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase tracking-wide text-slate-600">Nectar Gathered</span>
@@ -139,16 +138,6 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="grid grid-cols-2 gap-2 mt-4">
-                <button id="btn-treat" class="w-full py-2 rounded-xl bg-pink-500 text-white font-bold shadow-md hover:bg-pink-600 transition text-sm">
-                    💧 Food
-                </button>
-                <button id="btn-seed" class="w-full py-2 rounded-xl bg-emerald-500 text-white font-bold shadow-md hover:bg-emerald-600 transition text-sm">
-                    🌱 Plant Seed
-                </button>
-            </div>
-            <div id="seed-timer" class="text-center text-xs font-bold text-emerald-600 mt-2 hidden"></div>
         </div>
 
         <!-- Customization -->
@@ -183,56 +172,99 @@
                 <!-- Logs injected here -->
             </div>
         </div>
+    </div>
 
+    <!-- SEED TIMER NOTIFICATION (Floating above buttons) -->
+    <div id="seed-timer" class="absolute bottom-24 left-0 w-full text-center text-xs font-bold text-emerald-800 drop-shadow-md hidden z-40 pointer-events-none"></div>
+
+    <!-- BOTTOM ACTION BAR (Always visible!) -->
+    <div class="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-96 flex gap-3 z-40 pointer-events-auto">
+        <button id="btn-treat" class="flex-1 py-3 rounded-2xl bg-pink-500 text-white font-bold shadow-lg hover:bg-pink-600 active:scale-95 transition text-sm border-2 border-white/20">
+            💧 Food
+        </button>
+        <button id="btn-seed" class="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-bold shadow-lg hover:bg-emerald-600 active:scale-95 transition text-sm border-2 border-white/20">
+            🌱 Plant Seed
+        </button>
     </div>
 
     <script type="module">
+        // ==========================================
+        // 0. MOBILE UI TOGGLE LOGIC
+        // ==========================================
+        const menuBtn = document.getElementById('btn-toggle-menu');
+        const dashboard = document.getElementById('dashboard-panel');
+        
+        let menuOpen = window.innerWidth >= 768; 
+        if (!menuOpen) dashboard.classList.add('hidden');
+        else menuBtn.innerHTML = '❌ Close Menu';
+
+        menuBtn.addEventListener('click', () => {
+            menuOpen = !menuOpen;
+            if (menuOpen) {
+                dashboard.classList.remove('hidden');
+                menuBtn.innerHTML = '❌ Close Menu';
+            } else {
+                dashboard.classList.add('hidden');
+                menuBtn.innerHTML = '📊 Stats & Menu';
+            }
+        });
+
+        // Close menu automatically if a mobile user taps the 3D garden
+        window.addEventListener('pointerdown', (e) => {
+            if (window.innerWidth < 768 && menuOpen) {
+                if (!e.target.closest('#dashboard-panel') && !e.target.closest('#btn-toggle-menu') && !e.target.closest('.pointer-events-auto')) {
+                    menuOpen = false;
+                    dashboard.classList.add('hidden');
+                    menuBtn.innerHTML = '📊 Stats & Menu';
+                }
+            }
+        });
+
+        // ==========================================
+        // 1. DATA, STATE & LIFECYCLE
+        // ==========================================
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
+        
         let db, auth, currentUser;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
+        
         const state = {
-            birthDate: Date.now(), // Lifecycle tracking
-            totalFood: 0,          // Nutritional food eaten
-            stage: 'egg',          // egg, larva, adult
-            hiveUnlocked: false,   // Unpacking the hive box
-            children: 0,           // Number of offspring
+            birthDate: Date.now(), 
+            totalFood: 0,          
+            stage: 'egg',          
+            hiveUnlocked: false,   
+            children: 0,           
             color: '#E6A122', 
             accessory: 'none',
             audioEnabled: false,
             isSleeping: false,
             friendsUnlocked: { butterfly: false, ladybug: false, grasshopper: false, firefly: false },
-            seeds: [], // Upgraded to allow multiple seeds!
+            seeds: [], 
             stats: { energy: 100, hunger: 100, happiness: 100, tiredness: 0, nectar: 0, honeyJars: 0 } 
         };
-
+        
         let isSceneReady = false;
-
+        
         function calculateStage() {
-            // Calculate age in real hours
             const ageMs = Date.now() - state.birthDate;
             const hoursOld = ageMs / (1000 * 60 * 60);
             const daysOld = ageMs / (1000 * 60 * 60 * 24);
-
-            // Growth relies on age AND proper nutrition (Royal Jelly)
             const growthScore = daysOld + (state.totalFood / 30); 
-
+            
             let newStage = 'egg';
             if (hoursOld >= 1.0) { // Hatches after 1 hour real time
                 if (growthScore >= 2.0) newStage = 'adult';
                 else newStage = 'larva';
             }
-
+            
             if (state.stage !== newStage) {
                 state.stage = newStage;
                 logUI(`🎉 Honey has grown into a ${newStage}!`);
                 if (typeof rebuildBeeMesh === 'function') rebuildBeeMesh();
                 
-                // Show box when becoming adult if hive not unlocked
                 if (newStage === 'adult' && !state.hiveUnlocked) {
                     boxGroup.visible = true;
                     logUI("📦 A mysterious box has appeared in the garden!");
@@ -241,13 +273,11 @@
             
             document.getElementById('life-stage').innerText = `Stage: ${state.stage.charAt(0).toUpperCase() + state.stage.slice(1)}`;
             
-            // Dynamic Button Update
             const treatBtn = document.getElementById('btn-treat');
             if (state.stage === 'larva') treatBtn.innerText = "💧 Feed Royal Jelly";
             else if (state.stage === 'adult') treatBtn.innerText = "💧 Sugar Water";
             else treatBtn.innerText = "💧 Food (Waiting to hatch)";
-
-            // Calculate children (1 child per 1000 jars)
+            
             const expectedChildren = Math.floor(state.stats.honeyJars / 1000);
             if (expectedChildren > state.children) {
                 state.children = expectedChildren;
@@ -255,7 +285,7 @@
                 if (typeof updateChildrenMeshes === 'function') updateChildrenMeshes();
             }
         }
-
+        
         function applyLoadedData(data) {
             state.birthDate = data.birthDate || state.birthDate;
             state.totalFood = data.totalFood || state.totalFood;
@@ -266,7 +296,6 @@
             state.color = data.color || state.color;
             state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
             
-            // Handle migration from old 'seed' to new 'seeds' array
             state.seeds = data.seeds || [];
             if (data.seed && data.seed.active) {
                 state.seeds.push({ id: Date.now(), plantedAt: data.seed.plantedAt, bloomed: data.seed.bloomed, position: data.seed.position });
@@ -275,19 +304,17 @@
             document.getElementById('inp-color').value = state.color;
             document.getElementById('sel-accessory').value = data.accessory || 'none';
             
-            if (!isSceneReady) return; // Prevent UI/3D updates before scene is built
-
+            if (!isSceneReady) return; 
             calculateStage();
             if (typeof applyBeeCustomization === 'function') applyBeeCustomization();
             updateStatsUI();
             checkFriends();
             
             hiveGroup.visible = state.hiveUnlocked;
-            boxGroup.visible = !state.hiveUnlocked;
-
+            boxGroup.visible = !state.hiveUnlocked && state.stage === 'adult';
             logUI("Honey's memories loaded successfully! 🌻");
         }
-
+        
         if (firebaseConfig) {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
@@ -313,9 +340,9 @@
             const localData = localStorage.getItem('honey_save_data_v10');
             if (localData) applyLoadedData(JSON.parse(localData));
         }
-
+        
         setInterval(() => {
-            calculateStage(); // Check growth regularly
+            calculateStage(); 
             const dataToSave = { 
                 birthDate: state.birthDate, totalFood: state.totalFood, stage: state.stage, hiveUnlocked: state.hiveUnlocked, children: state.children,
                 stats: state.stats, color: state.color, accessory: document.getElementById('sel-accessory').value, 
@@ -328,7 +355,7 @@
                 localStorage.setItem('honey_save_data_v10', JSON.stringify(dataToSave));
             }
         }, 5000);
-
+        
         document.getElementById('btn-reset').addEventListener('click', async () => {
             state.birthDate = Date.now();
             state.totalFood = 0;
@@ -353,10 +380,13 @@
             updateStatsUI();
             checkFriends();
             hiveGroup.visible = false;
-            boxGroup.visible = true;
+            boxGroup.visible = false;
             logUI("All game data wiped. A new egg has been laid!");
         });
 
+        // ==========================================
+        // 2. AUDIO & UI
+        // ==========================================
         let audioCtx, oscillator, filter, gainNode;
         function initAudio() {
             if (audioCtx) return;
@@ -371,7 +401,7 @@
             oscillator.start();
         }
         function updateAudioBuzz(speed) {
-            if (!state.audioEnabled || !audioCtx || state.stage !== 'adult') return; // Only adults buzz!
+            if (!state.audioEnabled || !audioCtx || state.stage !== 'adult') return; 
             if (state.isSleeping) {
                 gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
                 return;
@@ -395,7 +425,7 @@
                 audioBtn.classList.add('bg-white/50');
             }
         });
-
+        
         const logContainer = document.getElementById('log-container');
         function logUI(message) {
             const el = document.createElement('div');
@@ -408,11 +438,9 @@
         
         const bars = { energy: document.getElementById('bar-energy'), hunger: document.getElementById('bar-hunger'), happiness: document.getElementById('bar-happiness'), tiredness: document.getElementById('bar-tiredness') };
         const vals = { energy: document.getElementById('val-energy'), hunger: document.getElementById('val-hunger'), happiness: document.getElementById('val-happiness'), tiredness: document.getElementById('val-tiredness'), nectar: document.getElementById('val-nectar'), honey: document.getElementById('val-honey') };
-
         function updateStatsUI() {
             state.stats.nectar = state.stats.nectar || 0;
             state.stats.honeyJars = state.stats.honeyJars || 0;
-
             ['energy', 'hunger', 'happiness'].forEach(stat => {
                 state.stats[stat] = Math.max(0, Math.min(100, state.stats[stat]));
                 bars[stat].style.width = state.stats[stat] + '%';
@@ -429,11 +457,9 @@
             bars.tiredness.style.width = state.stats.tiredness + '%';
             vals.tiredness.innerText = Math.round(state.stats.tiredness) + '%';
             bars.tiredness.style.backgroundColor = state.stats.tiredness > 75 ? '#ef4444' : '#60a5fa';
-
             vals.nectar.innerText = `${Math.floor(state.stats.nectar)} drops`;
             vals.honey.innerText = `${state.stats.honeyJars.toFixed(2)} 🍯`; 
         }
-
         function spawnFloatingEmoji(emoji, position3D, sizeStr = '28px') {
             const pos = position3D.clone();
             pos.project(camera);
@@ -452,6 +478,9 @@
             setTimeout(() => el.remove(), 2000);
         }
 
+        // ==========================================
+        // 3. THREE.JS ENGINE & SCENE
+        // ==========================================
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0xecfdf5, 0.015);
@@ -464,7 +493,6 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
-
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xfff5b6, 1.2); 
@@ -474,17 +502,16 @@
         dirLight.shadow.camera.top = 30; dirLight.shadow.camera.bottom = -30;
         dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
         scene.add(dirLight);
-
+        
         let isNightTime = false;
         let isRaining = false;
         let rainParticles = [];
-
+        
         function updateEnvironment() {
             const hour = new Date().getHours();
             const isDay = hour >= 6 && hour < 19; 
             isNightTime = !isDay;
             
-            // Random Rain Chance
             if (Math.random() < 0.1) isRaining = !isRaining;
             
             const bodyClass = document.getElementById('main-body').classList;
@@ -514,14 +541,14 @@
             }
         }
         updateEnvironment();
-        setInterval(updateEnvironment, 60000); // Check every minute
-
+        setInterval(updateEnvironment, 60000); 
+        
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.12 }));
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        // --- THE HIVE & THE BOX (Clickable) ---
+        // --- THE HIVE & THE BOX ---
         const hiveGroup = new THREE.Group();
         const hiveMat = new THREE.MeshStandardMaterial({color: 0xdaa520, roughness: 0.9}); 
         for(let i=0; i<6; i++) {
@@ -541,7 +568,6 @@
         hiveGroup.position.set(0, 0, -20);
         scene.add(hiveGroup);
         const hiveDoorTarget = new THREE.Vector3(0, 2, -18);
-
         const hiveHitBoxGeo = new THREE.CylinderGeometry(6, 6, 10, 16);
         const hiveHitBoxMat = new THREE.MeshBasicMaterial({visible: false});
         const hiveHitBox = new THREE.Mesh(hiveHitBoxGeo, hiveHitBoxMat);
@@ -556,15 +582,14 @@
         boxMesh.castShadow = true;
         boxGroup.add(boxMesh);
         scene.add(boxGroup);
-
         const boxHitBox = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 7), new THREE.MeshBasicMaterial({visible: false}));
         boxHitBox.position.copy(boxMesh.position);
         scene.add(boxHitBox);
-
-        // Visibility set on load (Box only shows if adult)
+        
         hiveGroup.visible = state.hiveUnlocked;
         boxGroup.visible = (!state.hiveUnlocked && state.stage === 'adult');
 
+        // --- BEE & FRIENDS GENERATION ---
         const beeMaster = new THREE.Group();
         scene.add(beeMaster);
         let beeGroup = new THREE.Group(); 
@@ -575,9 +600,8 @@
         let pollenBaskets = [];
         let currentAccessoryMesh = null;
         const accessories = new THREE.Group();
+        const childBees = []; 
         
-        const childBees = []; // Array to hold offspring meshes
-
         function createNoiseTexture(colorHex, intensity=0.1) {
             const cvs = document.createElement('canvas'); cvs.width = 256; cvs.height = 256;
             const ctx = cvs.getContext('2d');
@@ -590,26 +614,23 @@
             tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
             return tex;
         }
-
+        
         const fuzzTex = createNoiseTexture('#B87333', 0.15); 
         const fuzzMat = new THREE.MeshStandardMaterial({ map: fuzzTex, bumpMap: fuzzTex, bumpScale: 0.08, roughness: 1.0 });
         const headMat = new THREE.MeshStandardMaterial({ color: 0x2A1B11, roughness: 0.9, bumpMap: createNoiseTexture('#2A1B11'), bumpScale: 0.02 }); 
         const eyeMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.8 }); 
-
         const stripeCanvas = document.createElement('canvas');
         stripeCanvas.width = 512; stripeCanvas.height = 512;
         const stripeCtx = stripeCanvas.getContext('2d');
         const stripeTex = new THREE.CanvasTexture(stripeCanvas);
         const abdMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.9, bumpMap: stripeTex, bumpScale: 0.05 });
-
         const realisticWingMat = new THREE.MeshPhysicalMaterial({ 
             color: 0xffffff, transparent: true, opacity: 0.6, roughness: 0.1, metalness: 0.1, clearcoat: 1.0, side: THREE.DoubleSide
         });
         const wingOutlineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.8 });
         const pollenMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0x555500, roughness: 0.7 }); 
-
+        
         function rebuildBeeMesh() {
-            // Clear existing
             beeMaster.remove(beeGroup);
             beeGroup = new THREE.Group();
             beeMaster.add(beeGroup);
@@ -617,23 +638,22 @@
             legs.length = 0;
             pollenBaskets.length = 0;
             accessories.clear();
-
-            // All stages are locked to size 0.5 as requested
+            
             const baseScale = 0.5;
             beeMaster.scale.set(baseScale, baseScale, baseScale);
-
+            
             if (state.stage === 'egg') {
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 32), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.2}));
                 egg.scale.set(0.8, 1.2, 0.8);
                 egg.position.set(0, 1.0, 0);
                 egg.castShadow = true;
                 beeGroup.add(egg);
-                beeMaster.position.set(0, 0, 0); // Center of grass
+                beeMaster.position.set(0, 0, 0); 
                 targetPosition.set(0, 0, 0);
             } 
             else if (state.stage === 'larva') {
                 const larvaGroup = new THREE.Group();
-                const grubMat = new THREE.MeshStandardMaterial({color: 0xfffacd, roughness: 0.5}); // Pale yellow
+                const grubMat = new THREE.MeshStandardMaterial({color: 0xfffacd, roughness: 0.5}); 
                 for(let i=0; i<4; i++) {
                     const seg = new THREE.Mesh(new THREE.SphereGeometry(0.8 - (i*0.1), 32, 32), grubMat);
                     seg.position.set(0, 0.6, i * -0.6);
@@ -644,17 +664,15 @@
                 eye.position.set(0.3, 0.8, 0.6);
                 const eye2 = eye.clone(); eye2.position.set(-0.3, 0.8, 0.6);
                 larvaGroup.add(eye, eye2);
-                
                 beeGroup.add(larvaGroup);
             }
             else {
-                // ADULT BEE
                 const thorax = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32), fuzzMat);
                 thorax.scale.set(1.0, 0.95, 1.1);
                 thorax.position.set(0, 1.2, 0);
                 thorax.castShadow = true;
                 beeGroup.add(thorax);
-
+                
                 const abdomen = new THREE.Mesh(new THREE.SphereGeometry(1.25, 32, 32), abdMat);
                 abdomen.name = "abdomen";
                 abdomen.scale.set(1.0, 1.0, 1.6);
@@ -662,14 +680,14 @@
                 abdomen.rotation.x = 0.15; 
                 abdomen.castShadow = true;
                 beeGroup.add(abdomen);
-
+                
                 const headGroup = new THREE.Group();
                 headGroup.position.set(0, 1.1, 1.1);
                 const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.85, 32, 32), headMat);
                 headBase.scale.set(1.1, 0.9, 0.8);
                 headBase.castShadow = true;
                 headGroup.add(headBase);
-
+                
                 const eyeGeo = new THREE.SphereGeometry(0.45, 32, 32);
                 eyeGeo.scale(0.8, 1.4, 1.1);
                 const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
@@ -677,7 +695,7 @@
                 const eyeL = eyeR.clone();
                 eyeL.position.set(-0.55, 0.1, 0.1); eyeL.rotation.y = -0.3;
                 headGroup.add(eyeR, eyeL);
-
+                
                 const createAntenna = (x, rotZ) => {
                     const ant = new THREE.Group();
                     const seg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.5), headMat);
@@ -692,8 +710,7 @@
                 };
                 headGroup.add(createAntenna(0.3, -0.4), createAntenna(-0.3, 0.4));
                 beeGroup.add(headGroup);
-
-                // Wings
+                
                 const createSolidWing = (x, z, scaleX, scaleZ, rotY) => {
                     const pivot = new THREE.Group();
                     pivot.position.set(x, 2.2, z); 
@@ -714,8 +731,7 @@
                 createSolidWing(-0.4, 0.2, 0.8, 1.0, -0.3); 
                 createSolidWing(0.3, -0.2, 0.6, 0.8, 0.6);  
                 createSolidWing(-0.3, -0.2, 0.6, 0.8, -0.6);
-
-                // Legs & Pollen
+                
                 const createRealisticLeg = (x, z, rotY, isHindLeg) => {
                     const legGroup = new THREE.Group();
                     legGroup.position.set(x, 0.8, z);
@@ -725,7 +741,6 @@
                     const tibia = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.8), headMat);
                     tibia.position.set(0.3, -0.9, 0); tibia.rotation.z = 0.2;
                     legGroup.add(femur, tibia);
-
                     if (isHindLeg) {
                         const pollen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), pollenMat);
                         pollen.scale.set(0.6, 1.2, 0.8); 
@@ -743,19 +758,16 @@
                 createRealisticLeg(-0.9, 0, 0, false);      
                 createRealisticLeg(0.7, -0.6, -0.2, true);  
                 createRealisticLeg(-0.7, -0.6, 0.2, true);  
-
                 headGroup.add(accessories); 
             }
             
             applyBeeCustomization();
         }
-
         const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(3.5, 16, 16), new THREE.MeshBasicMaterial({visible: false}));
         beeHitBox.position.set(0, 1.2, 0);
         beeMaster.add(beeHitBox);
-
+        
         function updateChildrenMeshes() {
-            // Simple visual representation of children
             while (childBees.length < state.children && childBees.length < 5) {
                 const child = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({color: 0xfffacd}));
                 child.position.set(Math.random()*10 - 5, 1.0, Math.random()*10 - 5);
@@ -819,10 +831,8 @@
         scene.add(fireflyGroup);
 
         function checkFriends() {
-            // Unlocks based on Honey Jars OR Age/Growth
             const daysOld = (Date.now() - state.birthDate) / (1000 * 60 * 60 * 24);
             const growthScore = daysOld + (state.totalFood / 30);
-
             if ((state.stats.honeyJars >= 2.0 || growthScore >= 1.0) && !state.friendsUnlocked.butterfly) {
                 state.friendsUnlocked.butterfly = true;
                 logUI("🦋 A beautiful Blue Butterfly has moved into the garden!");
@@ -850,8 +860,7 @@
         }
 
         function applyBeeCustomization() {
-            if(state.stage !== 'adult') return; // Only color adults
-
+            if(state.stage !== 'adult') return; 
             stripeCtx.fillStyle = state.color; 
             stripeCtx.fillRect(0, 0, 512, 512);
             for(let i=0; i<15000; i++) { 
@@ -866,9 +875,7 @@
             stripeCtx.fillRect(0, 320, 512, 60);
             stripeCtx.fillRect(0, 440, 512, 60);
             stripeTex.needsUpdate = true;
-
             if (currentAccessoryMesh) { accessories.remove(currentAccessoryMesh); currentAccessoryMesh = null; }
-
             const acc = document.getElementById('sel-accessory').value;
             if (acc === 'tophat') {
                 const hat = new THREE.Group();
@@ -910,11 +917,12 @@
                 accessories.add(bt); 
             }
         }
-
         document.getElementById('inp-color').addEventListener('input', (e) => { state.color = e.target.value; applyBeeCustomization(); });
         document.getElementById('sel-accessory').addEventListener('change', (e) => { state.accessory = e.target.value; applyBeeCustomization(); });
 
-
+        // ==========================================
+        // 4. INTERACTION & PLANTING LOGIC
+        // ==========================================
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); 
@@ -941,17 +949,15 @@
         });
 
         function renderSeeds() {
-            // Remove old meshes
             activeSeedMeshes.forEach(mesh => { scene.remove(mesh); items = items.filter(i => i.mesh !== mesh); });
             activeSeedMeshes = [];
-
-            const bloomTime = 2 * 60 * 60 * 1000; // 2 HOURS
-
+            const bloomTime = 2 * 60 * 60 * 1000; 
+            
             state.seeds.forEach(seedData => {
                 const timeElapsed = Date.now() - seedData.plantedAt;
                 const seedPos = new THREE.Vector3(seedData.position.x, 0, seedData.position.z);
                 let currentMesh;
-
+                
                 if (timeElapsed >= bloomTime || seedData.bloomed) {
                     seedData.bloomed = true;
                     currentMesh = new THREE.Group();
@@ -983,7 +989,6 @@
                 activeSeedMeshes.push(currentMesh);
             });
             
-            // Update UI timer visibility based on unbloomed seeds
             const unbloomed = state.seeds.filter(s => !s.bloomed);
             if (unbloomed.length > 0) {
                 document.getElementById('seed-timer').classList.remove('hidden');
@@ -994,18 +999,15 @@
         }
         setInterval(renderSeeds, 60000); 
 
-        // Treat Button logic
         document.getElementById('btn-treat').addEventListener('click', () => {
             if (state.stage === 'egg') {
                 logUI("🥚 The egg doesn't need to eat right now.");
                 return;
             }
             if (state.isSleeping) return;
-
             const treatPos = new THREE.Vector3((Math.random() - 0.5) * 10, 0, 10);
             
             if (state.stage === 'larva') {
-                // Royal Jelly for Larvae
                 const treat = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0x555555, transparent: true, opacity: 0.9}));
                 treat.scale.set(1, 0.5, 1);
                 treat.position.copy(treatPos);
@@ -1013,7 +1015,6 @@
                 items.push({ mesh: treat, scaleTarget: 1.0, type: 'jelly' });
                 logUI("Dropped some nutritious Royal Jelly! 💧");
             } else {
-                // Sugar Water for Adults
                 const treat = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshStandardMaterial({color: 0x00aaff, transparent: true, opacity: 0.8, roughness: 0.1}));
                 treat.scale.set(1, 1.5, 1); 
                 treat.position.copy(treatPos);
@@ -1039,7 +1040,6 @@
             mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
 
-            // Seed Planting Mode
             if (isPlantingSeed) {
                 const intersectPoint = new THREE.Vector3();
                 raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
@@ -1056,7 +1056,6 @@
                 return;
             }
 
-            // 1. Did we tap the Box?
             const boxIntersects = raycaster.intersectObject(boxHitBox);
             if (boxIntersects.length > 0 && boxGroup.visible && !state.hiveUnlocked && state.stage === 'adult') {
                 state.hiveUnlocked = true;
@@ -1067,7 +1066,6 @@
                 return;
             }
 
-            // 2. Did we tap the Hive?
             const hiveIntersects = raycaster.intersectObject(hiveHitBox);
             if (hiveIntersects.length > 0 && state.hiveUnlocked) {
                 state.isSleeping = !state.isSleeping;
@@ -1082,7 +1080,6 @@
                 return;
             }
             
-            // 3. Did we tap Honey?
             if (!state.isSleeping && beeMaster.visible) {
                 const beeIntersects = raycaster.intersectObject(beeHitBox);
                 if (beeIntersects.length > 0) {
@@ -1104,7 +1101,6 @@
                 }
             }
 
-            // 4. Drop a flower (Only adults care, but decorative for larvae)
             if (state.isSleeping) return;
             
             const intersectPoint = new THREE.Vector3();
@@ -1173,7 +1169,9 @@
             logUI(isGolden ? "🌟 A rare Golden Flower bloomed!" : `Planted a beautiful ${type}! 🌸`);
         });
 
-
+        // ==========================================
+        // 5. ANIMATION LOOP
+        // ==========================================
         const clock = new THREE.Clock();
         let beeVelocity = new THREE.Vector3();
         let statDecayTimer = 0;
@@ -1187,7 +1185,6 @@
             const dt = Math.min(clock.getDelta(), 0.1); 
             const time = clock.getElapsedTime();
 
-            // Rain Particles
             if (isRaining) {
                 if (Math.random() < 0.5) {
                     const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), new THREE.MeshBasicMaterial({color: 0x93c5fd, transparent: true, opacity: 0.6}));
@@ -1195,7 +1192,6 @@
                     scene.add(drop);
                     rainParticles.push(drop);
                 }
-                // Auto-return to hive if raining and adult!
                 if (!state.isSleeping && state.stage === 'adult' && state.hiveUnlocked) {
                     targetPosition.copy(hiveDoorTarget);
                     if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true;
@@ -1206,7 +1202,6 @@
                 if (rainParticles[i].position.y < 0) { scene.remove(rainParticles[i]); rainParticles.splice(i, 1); }
             }
 
-            // Stat Management
             statDecayTimer += dt;
             if(statDecayTimer > 1.0) {
                 statDecayTimer = 0;
@@ -1222,7 +1217,6 @@
                             if (Math.abs(state.stats.honeyJars % 1) < 0.19) spawnFloatingEmoji('🍯', hiveDoorTarget);
                         }
                     } else {
-                        // Awake stat decay
                         state.stats.energy -= 0.8; 
                         state.stats.hunger -= 1.5; 
                         state.stats.tiredness += 1.2; 
@@ -1236,7 +1230,6 @@
                     }
                     updateStatsUI();
                     
-                    // AUTONOMOUS HIVE RETURN if full of nectar
                     if (!state.isSleeping && state.stage === 'adult' && state.hiveUnlocked) {
                         if (state.stats.nectar >= 5) {
                             logUI("Honey's pollen baskets are full! Returning to hive.");
@@ -1247,7 +1240,6 @@
                 }
             }
 
-            // Playful Zzz Emojis
             if (state.isSleeping && beeMaster.position.distanceTo(hiveDoorTarget) < 2.0) {
                 zzzTimer += dt;
                 if (zzzTimer > 1.0) { 
@@ -1258,7 +1250,6 @@
                 }
             }
 
-            // Rainbow Trail (Always on when flying fast)
             if (!state.isSleeping && state.stage === 'adult' && beeVelocity.length() > 0.5) {
                 if (Math.random() > 0.4) {
                     const color = new THREE.Color().setHSL((time * 0.5) % 1, 1, 0.6); 
@@ -1274,7 +1265,6 @@
                 else { p.mesh.scale.setScalar(p.life); }
             }
 
-            // Animate Friends
             if (state.friendsUnlocked.butterfly && butterflyGroup.visible) {
                 butterflyGroup.position.x = 5 + Math.sin(time * 0.8) * 6;
                 butterflyGroup.position.z = -12 + Math.cos(time * 0.6) * 5;
@@ -1299,7 +1289,6 @@
                 fireflyGroup.children[1].material.emissiveIntensity = isNightTime ? (0.5 + Math.sin(time * 5) * 0.5) : 0;
             }
             
-            // Animate Child Bees
             childBees.forEach((child, i) => {
                 const angle = time + (i * Math.PI/2);
                 child.position.x = beeMaster.position.x + Math.cos(angle)*3;
@@ -1307,7 +1296,6 @@
                 child.position.y = beeMaster.position.y - 1;
             });
 
-            // Timers
             if (isBeingPetted) { petTimer -= dt; if (petTimer <= 0) isBeingPetted = false; }
             if (isDoingWaggle) {
                 waggleTimer += dt;
@@ -1318,12 +1306,10 @@
                 if (item.mesh.scale.x < item.scaleTarget) item.mesh.scale.lerp(new THREE.Vector3(item.scaleTarget, item.scaleTarget, item.scaleTarget), 0.1);
             });
 
-            // Auto Wander Logic 
             if (!state.isSleeping && !isBeingPetted && !isDoingWaggle && state.stats.nectar < 5 && !isRaining) {
                 autoTimer -= dt;
                 if (autoTimer <= 0) {
                     if (items.length > 0) {
-                        // Prioritize food based on stage
                         let priorityItem;
                         if (state.stage === 'larva') {
                             priorityItem = items.find(i => i.type === 'jelly') || items[0];
@@ -1339,19 +1325,16 @@
                 }
             }
 
-            // Physics & Movement
             const direction = new THREE.Vector3().subVectors(targetPosition, beeMaster.position);
             
-            // Larva/Egg stay on ground, adults fly
             if (state.stage === 'larva' || state.stage === 'egg') direction.y = 0;
             else if (!state.isSleeping) direction.y = 0; 
             
             const distance = direction.length();
             let maxSpeed = state.isSleeping ? 10.0 : 15.0; 
-            if (state.stage === 'larva') maxSpeed = 3.0; // Larvae are slow!
+            if (state.stage === 'larva') maxSpeed = 3.0; 
             if (state.stage === 'egg') maxSpeed = 0.0;
             
-            // Behavioral slow down based on stats
             const speedMultiplier = (state.stats.energy/100) * (state.stats.hunger/100);
             const activeSpeed = Math.max(maxSpeed * 0.2, maxSpeed * speedMultiplier);
 
@@ -1364,12 +1347,10 @@
             beeMaster.position.addScaledVector(beeVelocity, dt);
             const currentSpeed = beeVelocity.length();
 
-            // Rotations & Visibility
             if (state.isSleeping && distance < 0.5) {
                 beeMaster.visible = false; 
             } else {
                 beeMaster.visible = true;
-
                 if (isDoingWaggle) {
                     beeMaster.rotation.y = Math.sin(time * 25) * 0.4; 
                     beeMaster.position.x += Math.sin(time * 5) * 0.05;
@@ -1385,8 +1366,6 @@
                     const lookPos = beeMaster.position.clone().add(beeVelocity);
                     targetRotationObj.position.copy(beeMaster.position);
                     targetRotationObj.lookAt(lookPos);
-                    
-                    // Dynamic Droop! If sad/tired, droop head down.
                     const tilt = speedMultiplier < 0.3 ? -0.3 : 0.2; 
                     targetRotationObj.rotateX(tilt); 
                     beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.15);
@@ -1399,14 +1378,11 @@
                 }
             }
 
-            // Stage-specific Animations
             if (state.stage === 'adult' && !state.isSleeping) {
                 if (!isDoingWaggle) beeGroup.position.y = 5.0 + Math.sin(time * 3) * 0.5;
                 
-                // Slow flapping if tired/sad
                 let flapSpeed = currentSpeed > 1 || isDoingWaggle ? 100 : 60; 
                 if (speedMultiplier < 0.3) flapSpeed = 20; 
-
                 wingPivots.forEach(w => w.pivot.rotation.z = (Math.sin(time * flapSpeed) * 0.8) * w.sign);
 
                 const targetLegTuck = (currentSpeed > 3 && !isBeingPetted && !isDoingWaggle) ? -0.4 : 0.1;
@@ -1415,24 +1391,23 @@
                     leg.rotation.z += Math.sin(time * 5 + index) * 0.005; 
                 });
 
-                // DYNAMIC POLLEN BASKETS!
                 const targetPollenSize = Math.max(0.001, Math.min(1.5, state.stats.nectar * 0.2));
                 pollenBaskets.forEach(basket => {
                     basket.visible = state.stats.nectar > 0; 
                     basket.scale.lerp(new THREE.Vector3(targetPollenSize, targetPollenSize, targetPollenSize), 0.1);
                 });
             } else if (state.stage === 'larva') {
-                beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.2; // Wriggle
+                beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.2; 
             }
 
-            // Collision (Eating items)
+            // Collision
             for (let i = items.length - 1; i >= 0; i--) {
                 const item = items[i];
                 const dx = beeMaster.position.x - item.mesh.position.x;
                 const dz = beeMaster.position.z - item.mesh.position.z;
                 const dist2D = Math.hypot(dx, dz);
                 
-                if (dist2D < 5.0 * state.size && !state.isSleeping && !isBeingPetted && !isDoingWaggle) { 
+                if (dist2D < 5.0 * 0.5 && !state.isSleeping && !isBeingPetted && !isDoingWaggle) { 
                     scene.remove(item.mesh);
                     items.splice(i, 1);
                     
@@ -1449,7 +1424,6 @@
                         logUI("Honey guzzled the sugar water! ⚡");
                         spawnFloatingEmoji('⚡', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
                     } else if (state.stage === 'adult') {
-                        // Real Food!
                         state.totalFood += 1;
                         state.stats.hunger = Math.min(100, state.stats.hunger + 30);
                         state.stats.energy = Math.min(100, state.stats.energy + 10);
@@ -1462,7 +1436,6 @@
                             isDoingWaggle = true; waggleTimer = 0; 
                         } else if (item.type === 'crystal') {
                             state.stats.nectar += 15; 
-                            // Free up a seed slot!
                             state.seeds = state.seeds.filter(s => s.id !== item.seedId); 
                             logUI("AMAZING! Honey ate the Crystal Bloom and is doing the Waggle Dance! 💎");
                             spawnFloatingEmoji('💎', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
@@ -1477,7 +1450,6 @@
                     if (!isDoingWaggle && state.stage === 'adult') beeMaster.rotateY(Math.PI * 2); 
                 }
             }
-
             updateAudioBuzz(currentSpeed / maxSpeed);
             renderer.render(scene, camera);
         }
@@ -1488,14 +1460,12 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Initialize!
         isSceneReady = true;
         rebuildBeeMesh();
         applyLoadedData(state);
         renderSeeds();
         
         setTimeout(animate, 100);
-
     </script>
 </body>
 </html>
