@@ -616,22 +616,12 @@
             beeMaster.scale.set(0.5, 0.5, 0.5); 
             
             if (state.stage === 'egg') {
-                // MASSIVE, GOLDEN, VISIBLE EGG FIX!
-                const eggMat = new THREE.MeshStandardMaterial({color: 0xffea00, emissive: 0xaa5500, roughness: 0.4, metalness: 0.2});
-                const egg = new THREE.Mesh(new THREE.SphereGeometry(3.5, 32, 32), eggMat);
+                // FIXED: Smaller, perfectly smooth golden egg without any extra spots.
+                const eggMat = new THREE.MeshStandardMaterial({color: 0xffd700, emissive: 0x886600, roughness: 0.2, metalness: 0.5});
+                const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
                 egg.scale.set(0.85, 1.2, 0.85); // classic egg shape
-                egg.position.set(0, 3.5, 0); // Raised above grass
+                egg.position.set(0, 1.8, 0); // Lowered so it sits perfectly in the grass
                 egg.castShadow = true;
-                
-                // Add cute white spots so it doesn't look like a plain sphere
-                const spotMat = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.9});
-                for(let i=0; i<6; i++) {
-                    const spot = new THREE.Mesh(new THREE.SphereGeometry(0.7), spotMat);
-                    spot.position.set(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1).normalize().multiplyScalar(3.5);
-                    spot.scale.set(1, 0.5, 1);
-                    spot.lookAt(0,0,0);
-                    egg.add(spot);
-                }
                 
                 beeGroup.add(egg);
                 if(beeMaster.position.length() < 0.1) beeMaster.position.set(0, 0, 0); 
@@ -706,8 +696,10 @@
             
             applyBeeCustomization();
         }
-        const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(3.5, 16, 16), new THREE.MeshBasicMaterial({visible: false}));
-        beeHitBox.position.set(0, 1.2, 0);
+        
+        // PERFECTLY CLEAR BUBBLE: Allows dragging without blocking views
+        const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 }));
+        beeHitBox.position.set(0, 3.5, 0);
         beeMaster.add(beeHitBox);
         
         function updateChildrenMeshes() {
@@ -836,7 +828,6 @@
                     currentMesh.add(bloom); currentMesh.position.copy(seedPos); scene.add(currentMesh);
                     items.push({ mesh: currentMesh, scaleTarget: 1.0, type: 'crystal', seedId: seedData.id });
                 } else {
-                    // FIXED: Massive dirt mound with a cute sprout so it's super visible!
                     currentMesh = new THREE.Group();
                     const mound = new THREE.Mesh(new THREE.SphereGeometry(1.5), new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 1.0}));
                     mound.scale.set(1, 0.4, 1); currentMesh.add(mound);
@@ -883,10 +874,11 @@
             if (x === undefined || y === undefined) return;
             mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
-            raycaster.ray.intersectPlane(interactionPlane, pointerIntersect);
+            
+            const hit = raycaster.ray.intersectPlane(interactionPlane, pointerIntersect);
 
-            if (isDraggingEgg && state.stage === 'egg') {
-                beeMaster.position.x = pointerIntersect.x; beeMaster.position.z = pointerIntersect.z;
+            if (hit && isDraggingEgg && state.stage === 'egg') {
+                beeMaster.position.x = hit.x; beeMaster.position.z = hit.z;
                 targetPosition.copy(beeMaster.position);
             }
         });
@@ -904,7 +896,7 @@
             if (isPlantingSeed) {
                 const intersectPoint = new THREE.Vector3(); 
                 const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
-                if (!hit) return; // FIXED: Prevent seeds planting in the sky!
+                if (!hit) return; 
                 
                 const newSeed = { id: Date.now() + Math.random(), plantedAt: Date.now(), bloomed: false, position: {x: intersectPoint.x, y: 0, z: intersectPoint.z} };
                 state.seeds.push(newSeed); isPlantingSeed = false; document.body.classList.remove('cursor-plant'); renderSeeds(); return;
@@ -941,7 +933,7 @@
             
             const intersectPoint = new THREE.Vector3(); 
             const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
-            if (!hit) return; // FIXED: Prevents flowers dropping at 0,0,0 and getting eaten!
+            if (!hit) return; 
             
             const isGolden = Math.random() < 0.10; const flowerTypes = ['daisy', 'sunflower', 'tulip', 'bluebell']; const type = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
             const flower = new THREE.Group(); const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshStandardMaterial({color: 0x4ade80})); stem.position.y = 0.5; flower.add(stem); const bloom = new THREE.Group(); bloom.position.y = 1.0;
@@ -969,7 +961,6 @@
         // ==========================================
         const clock = new THREE.Clock();
         
-        // FIXED BUG: Restored missing clock variables!
         let beeVelocity = new THREE.Vector3();
         let statDecayTimer = 0;
         let autoTimer = 0;
@@ -1086,15 +1077,13 @@
             } else if (state.stage === 'larva') { 
                 beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.2; 
             } else if (state.stage === 'egg') {
-                // FIXED EGG: Gentle wobble + bouncy elevation so it's super visible!
-                beeGroup.position.y = 2.0 + Math.sin(time * 3) * 0.5;
+                beeGroup.position.y = 1.0 + Math.sin(time * 3) * 0.3; // Lowered height & gentle bounce
                 beeGroup.rotation.z = Math.sin(time * 4) * 0.1;
                 beeGroup.rotation.x = Math.sin(time * 3.5) * 0.1;
             }
             
             for (let i = items.length - 1; i >= 0; i--) {
                 const item = items[i]; const dist2D = Math.hypot(beeMaster.position.x - item.mesh.position.x, beeMaster.position.z - item.mesh.position.z);
-                // FIXED BUG: The egg was eating everything instantly if dropped too close to the middle of the screen!
                 if (state.stage !== 'egg' && dist2D < 2.5 && !state.isSleeping && !isBeingPetted && !isDoingWaggle && !isDraggingEgg) { 
                     scene.remove(item.mesh); items.splice(i, 1);
                     if (item.type === 'jelly' && state.stage === 'larva') { state.totalFood += 1; state.stats.hunger = Math.min(100, state.stats.hunger + 50); state.stats.energy = Math.min(100, state.stats.energy + 20); logUI(`The larva ate nutritious Royal Jelly! 🐛`); }
@@ -1116,5 +1105,3 @@
     </script>
 </body>
 </html>
-
-```
