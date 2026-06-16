@@ -78,6 +78,9 @@
         </button>
     </div>
 
+    <!-- EGG TIMER NOTIFICATION (Floating at top) -->
+    <div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity"></div>
+
     <!-- MOBILE-FRIENDLY DASHBOARD (Hidden by default on phones) -->
     <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-none max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity">
         
@@ -998,6 +1001,29 @@
             }
         }
         setInterval(renderSeeds, 60000); 
+
+        // ==========================================
+        // EGG TIMER LOGIC
+        // ==========================================
+        function updateEggTimer() {
+            const eggTimerEl = document.getElementById('egg-timer');
+            if (state.stage === 'egg') {
+                const hatchTime = state.birthDate + (60 * 60 * 1000); // 1 hour
+                const timeLeft = hatchTime - Date.now();
+                if (timeLeft > 0) {
+                    eggTimerEl.classList.remove('hidden');
+                    const m = Math.floor(timeLeft / 60000);
+                    const s = Math.floor((timeLeft % 60000) / 1000);
+                    eggTimerEl.innerText = `🥚 Hatches in: ${m}m ${s}s`;
+                } else {
+                    eggTimerEl.innerText = `🥚 Hatching soon...`;
+                }
+            } else {
+                eggTimerEl.classList.add('hidden');
+            }
+        }
+        setInterval(updateEggTimer, 1000);
+        setTimeout(updateEggTimer, 500);
 
         document.getElementById('btn-treat').addEventListener('click', () => {
             if (state.stage === 'egg') {
