@@ -771,29 +771,31 @@
             if (state.stage === 'egg') {
                 beeMaster.scale.set(0.5, 0.5, 0.5); 
                 
-                const eggCvs = document.createElement('canvas');
-                eggCvs.width = 256; eggCvs.height = 256;
-                const eggCtx = eggCvs.getContext('2d');
-                eggCtx.fillStyle = '#ffd700';
-                eggCtx.fillRect(0,0,256,256);
-                
-                if (beeMaster.userData && beeMaster.userData.isCracked) {
-                    eggCtx.strokeStyle = '#553300';
-                    eggCtx.lineWidth = 4;
-                    eggCtx.beginPath();
-                    eggCtx.moveTo(128, 0); eggCtx.lineTo(150, 50); eggCtx.lineTo(110, 100); eggCtx.lineTo(140, 150); eggCtx.lineTo(128, 256);
-                    eggCtx.stroke();
-                    eggCtx.beginPath();
-                    eggCtx.moveTo(110, 100); eggCtx.lineTo(50, 120);
-                    eggCtx.stroke();
-                }
-                
-                const eggTex = new THREE.CanvasTexture(eggCvs);
-                const eggMat = new THREE.MeshStandardMaterial({map: eggTex, roughness: 0.2, metalness: 0.5});
+                // FIXED FOR IPHONE: Using pure solid 3D materials instead of a drawn canvas texture!
+                const eggMat = new THREE.MeshStandardMaterial({
+                    color: 0xffd700, 
+                    emissive: 0x221100, // Gives it a nice warm golden glow
+                    roughness: 0.2, 
+                    metalness: 0.5
+                });
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
                 egg.scale.set(0.85, 1.2, 0.85); 
                 egg.position.set(0, 1.8, 0); 
                 egg.castShadow = true;
+                
+                if (beeMaster.userData && beeMaster.userData.isCracked) {
+                    // Physical 3D crack line so it renders perfectly on iOS
+                    const crackMat = new THREE.LineBasicMaterial({ color: 0x553300 });
+                    const crackPoints = [];
+                    crackPoints.push(new THREE.Vector3(0, 1.5, 1.45));
+                    crackPoints.push(new THREE.Vector3(0.2, 0.5, 1.5));
+                    crackPoints.push(new THREE.Vector3(-0.2, 0, 1.55));
+                    crackPoints.push(new THREE.Vector3(0.3, -0.5, 1.5));
+                    crackPoints.push(new THREE.Vector3(0, -1.5, 1.45));
+                    const crackGeo = new THREE.BufferGeometry().setFromPoints(crackPoints);
+                    const crackLine = new THREE.Line(crackGeo, crackMat);
+                    egg.add(crackLine);
+                }
                 
                 beeGroup.add(egg);
                 if(beeMaster.position.length() < 0.1) beeMaster.position.set(0, 0, 0); 
