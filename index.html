@@ -715,7 +715,7 @@
         hiveGroup.position.set(0, 0, -20);
         const hiveDoorTarget = new THREE.Vector3(0, 2, -18);
         const hiveHitBoxGeo = new THREE.CylinderGeometry(6, 6, 15, 16);
-        const hiveHitBoxMat = new THREE.MeshBasicMaterial({visible: false});
+        const hiveHitBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0, depthWrite: false });
         const hiveHitBox = new THREE.Mesh(hiveHitBoxGeo, hiveHitBoxMat);
         hiveHitBox.position.copy(hiveGroup.position); hiveHitBox.position.y += 4;
         scene.add(hiveHitBox);
@@ -724,7 +724,7 @@
         const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 7), new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 0.9}));
         boxMesh.position.set(0, 3.5, -20); boxMesh.castShadow = true; boxGroup.add(boxMesh);
         scene.add(boxGroup);
-        const boxHitBox = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshBasicMaterial({visible: false}));
+        const boxHitBox = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0, depthWrite: false }));
         boxHitBox.position.copy(boxMesh.position);
         scene.add(boxHitBox);
         
@@ -875,8 +875,8 @@
             applyBeeCustomization();
         }
         
-        const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 }));
-        beeHitBox.position.set(0, 2.0, 0);
+        const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(3.5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, depthWrite: false }));
+        beeHitBox.position.set(0, 1.8, 0);
         beeMaster.add(beeHitBox);
         
         function updateChildrenMeshes() {
