@@ -641,7 +641,9 @@
         scene.add(hiveGroup);
 
         function buildHive() {
-            hiveGroup.clear(); 
+            // FIXED FOR iOS COMPATIBILITY: Do not use .clear() in older Three.js versions!
+            while(hiveGroup.children.length > 0) { hiveGroup.remove(hiveGroup.children[0]); }
+            
             const hiveMat = new THREE.MeshStandardMaterial({color: 0xdaa520, roughness: 0.9}); 
             const goldMat = new THREE.MeshStandardMaterial({color: 0xfbbf24, metalness: 0.8, roughness: 0.2});
             
@@ -752,11 +754,15 @@
             beeMaster.remove(beeGroup);
             beeGroup = new THREE.Group();
             beeMaster.add(beeGroup);
-            wingPivots.length = 0; legs.length = 0; pollenBaskets.length = 0; accessories.clear();
+            wingPivots.length = 0; legs.length = 0; pollenBaskets.length = 0; 
+            
+            // FIXED FOR iOS COMPATIBILITY: Safe while loop to clear group!
+            while(accessories.children.length > 0) { accessories.remove(accessories.children[0]); }
             
             if (state.stage === 'egg') {
                 beeMaster.scale.set(0.5, 0.5, 0.5); 
                 
+                // FIXED EGG: Pure 3D golden sphere to ensure iPhone rendering! No canvas texture.
                 const eggMat = new THREE.MeshStandardMaterial({color: 0xffd700, emissive: 0x886600, roughness: 0.2, metalness: 0.5});
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
                 egg.scale.set(0.85, 1.2, 0.85); 
@@ -1205,7 +1211,7 @@
                     }
 
                     if (state.stats.hunger <= 0) {
-                        state.stats.health -= 0.01; // Slower health drain: takes over 2 hours to faint once starving
+                        state.stats.health -= 0.01; // Active health drain while starving
                         if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
                             logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
                         }
