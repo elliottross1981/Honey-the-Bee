@@ -51,7 +51,7 @@
     <!-- EGG TIMER NOTIFICATION -->
     <div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity border-2 border-purple-200"></div>
 
-    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
+    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-auto max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
         <div class="glass rounded-2xl p-4 shadow-lg">
             
             <div class="flex justify-between items-center mb-1">
@@ -120,7 +120,7 @@
 
         <div class="glass rounded-2xl p-3 h-28 flex flex-col shadow-lg">
             <h2 class="font-bold text-slate-700 text-xs mb-1 uppercase tracking-wide">Diary</h2>
-            <div id="log-container" class="flex-1 overflow-y-auto custom-scroll text-xs text-slate-700 space-y-1 pr-2 flex flex-col-reverse"></div>
+            <div id="log-container" class="flex-1 overflow-y-auto custom-scroll text-xs text-slate-700 space-y-2 pr-2 flex flex-col"></div>
         </div>
     </div>
 
@@ -350,18 +350,21 @@
                 const hoursOffline = msOffline / (1000 * 60 * 60);
                 
                 if (hoursOffline > 0.1) {
-                    state.stats.hunger -= (hoursOffline * 36.0); // 36 per hour drain
+                    const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
+                    const hoursUntilStarving = startingHunger / 36.0;
                     
-                    if (state.stats.hunger <= 0) {
-                        const remainingHours = hoursOffline - (data.stats.hunger / 36.0);
-                        state.stats.health -= (remainingHours * 18.0); // Health drains if starved
+                    if (hoursOffline > hoursUntilStarving) {
                         state.stats.hunger = 0;
+                        const starvingHours = hoursOffline - hoursUntilStarving;
+                        state.stats.health -= (starvingHours * 18.0); // Health drains if she starves while away
+                    } else {
+                        state.stats.hunger -= (hoursOffline * 36.0); // 36 per hour natural drain
                     }
                     
                     state.stats.energy = 100; 
                     
                     if (state.stats.health <= 0) {
-                        resetToEgg(`${state.name} fainted while you were away and reverted to an egg to heal!`);
+                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted to an egg to heal!`);
                     } else {
                         logUI(`Welcome back! ${state.name} missed you and is getting a little hungry.`);
                     }
@@ -764,11 +767,13 @@
                     // Precision math mapped exactly to the scaled sphere's surface so it doesn't poke out!
                     const crackMat = new THREE.LineBasicMaterial({ color: 0x553300, linewidth: 3 });
                     const crackPoints = [];
-                    crackPoints.push(new THREE.Vector3(0, 1.0, 1.157));
-                    crackPoints.push(new THREE.Vector3(0.3, 0.5, 1.414));
-                    crackPoints.push(new THREE.Vector3(-0.2, 0, 1.516));
-                    crackPoints.push(new THREE.Vector3(0.2, -0.5, 1.431));
-                    crackPoints.push(new THREE.Vector3(0, -1.0, 1.157));
+                    crackPoints.push(new THREE.Vector3(0, 1.0, 1.118));
+                    crackPoints.push(new THREE.Vector3(0.4, 0.5, 1.356));
+                    crackPoints.push(new THREE.Vector3(-0.3, 0, 1.469));
+                    crackPoints.push(new THREE.Vector3(0.4, -0.5, 1.356));
+                    crackPoints.push(new THREE.Vector3(0, -1.0, 1.118));
+                    crackPoints.forEach(p => p.multiplyScalar(1.02)); 
+                    
                     const crackGeo = new THREE.BufferGeometry().setFromPoints(crackPoints);
                     const crackLine = new THREE.Line(crackGeo, crackMat);
                     egg.add(crackLine);
@@ -1200,7 +1205,7 @@
                     }
 
                     if (state.stats.hunger <= 0) {
-                        state.stats.health -= 0.01; // Active health drain while starving
+                        state.stats.health -= 0.01; // Slower health drain: takes over 2 hours to faint once starving
                         if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
                             logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
                         }
