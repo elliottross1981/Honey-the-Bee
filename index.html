@@ -104,6 +104,18 @@
                     <input type="color" id="inp-color" value="#E6A122" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
                 </div>
                 <div class="flex justify-between items-center">
+                    <span class="font-semibold text-slate-600">Egg Color:</span>
+                    <select id="sel-egg-color" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
+                        <option value="#ffd700" class="text-black">Gold</option>
+                        <option value="#facc15" class="text-black">Yellow</option>
+                        <option value="#ff69b4" class="text-black">Pink</option>
+                        <option value="#60a5fa" class="text-black">Blue</option>
+                        <option value="#f97316" class="text-black">Orange</option>
+                        <option value="#ef4444" class="text-black">Red</option>
+                        <option value="#a855f7" class="text-black">Purple</option>
+                    </select>
+                </div>
+                <div class="flex justify-between items-center">
                     <span class="font-semibold text-slate-600">Accessory:</span>
                     <select id="sel-accessory" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
                         <option value="none" class="text-black">None</option>
@@ -162,6 +174,7 @@
             hiveLevel: 1, 
             children: 0,           
             color: '#E6A122', 
+            eggColor: '#ffd700',
             accessory: 'none',
             audioEnabled: false,
             isSleeping: false,
@@ -187,7 +200,7 @@
                 state.hourly.count = 0;
             }
             if (state.hourly.count >= 5) {
-                logUI(`⚠️ ${state.name} is too full to eat right now! Please wait a little while.`);
+                logUI(`⚠️ ${state.name} is too full/tired to eat right now! Please wait a little while.`);
                 return false;
             }
             state.hourly.count++;
@@ -240,7 +253,7 @@
                 const larvaHours = (Date.now() - state.stageStart) / 3600000;
                 if (larvaHours >= 24) {
                     if (state.larvaFood < 30) {
-                        resetToEgg(`${state.name} didn't get enough Royal Jelly in 24 hours and reverted back into an egg to heal!`);
+                        resetToEgg(`${state.name} didn't get enough Royal Jelly (needs 30) in 24 hours and reverted to an egg to heal!`);
                         return;
                     } else {
                         newStage = 'child';
@@ -253,7 +266,7 @@
             else if (state.stage === 'child') {
                 const childHours = (Date.now() - state.stageStart) / 3600000;
                 if (childHours >= 24 && state.childNectar < 20) {
-                    resetToEgg(`${state.name} didn't gather enough nectar in her first 24 hours and reverted back into an egg to heal!`);
+                    resetToEgg(`${state.name} didn't gather enough nectar (needs 20) in her first 24 hours and reverted to an egg to heal!`);
                     return;
                 }
                 if (state.childNectar >= 60) {
@@ -345,6 +358,7 @@
             state.childNectar = data.childNectar || 0;
             
             state.color = data.color || state.color;
+            state.eggColor = data.eggColor || '#ffd700';
             state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
             state.seeds = data.seeds || [];
             
@@ -365,7 +379,7 @@
                     state.stats.energy = 100; 
                     
                     if (state.stats.health <= 0) {
-                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted back into an egg to heal!`);
+                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
                     } else {
                         logUI(`Welcome back! ${state.name} missed you and is getting a little hungry.`);
                     }
@@ -373,6 +387,7 @@
             }
             
             document.getElementById('inp-color').value = state.color;
+            document.getElementById('sel-egg-color').value = state.eggColor;
             document.getElementById('sel-accessory').value = data.accessory || 'none';
             document.getElementById('inp-bee-name').value = state.name;
             
@@ -426,7 +441,7 @@
                 name: state.name, birthDate: state.birthDate, totalFood: state.totalFood, totalNectarGathered: state.totalNectarGathered, stage: state.stage, 
                 stageStart: state.stageStart, larvaFood: state.larvaFood, childNectar: state.childNectar,
                 hiveUnlocked: state.hiveUnlocked, hiveLevel: state.hiveLevel, children: state.children, hourly: state.hourly,
-                stats: state.stats, color: state.color, accessory: document.getElementById('sel-accessory').value, 
+                stats: state.stats, color: state.color, eggColor: state.eggColor, accessory: document.getElementById('sel-accessory').value, 
                 friendsUnlocked: state.friendsUnlocked, seeds: state.seeds, lastSaved: new Date().toISOString() 
             };
             if (db && currentUser) {
@@ -440,6 +455,7 @@
         document.getElementById('btn-reset').addEventListener('click', async () => {
             resetToEgg();
             document.getElementById('inp-color').value = state.color;
+            document.getElementById('sel-egg-color').value = state.eggColor;
             document.getElementById('sel-accessory').value = 'none';
             document.getElementById('inp-bee-name').value = state.name;
             if (db && currentUser) {
@@ -644,6 +660,7 @@
         scene.add(hiveGroup);
 
         function buildHive() {
+            // FIXED FOR iOS COMPATIBILITY: Do not use .clear() in older Three.js versions!
             while(hiveGroup.children.length > 0) { hiveGroup.remove(hiveGroup.children[0]); }
             
             const hiveMat = new THREE.MeshStandardMaterial({color: 0xdaa520, roughness: 0.9}); 
@@ -758,18 +775,22 @@
             beeGroup = new THREE.Group();
             beeMaster.add(beeGroup);
             wingPivots.length = 0; legs.length = 0; pollenBaskets.length = 0; 
+            
+            // FIXED FOR iOS COMPATIBILITY: Safe while loop to clear group!
             while(accessories.children.length > 0) { accessories.remove(accessories.children[0]); }
             
             if (state.stage === 'egg') {
                 beeMaster.scale.set(0.5, 0.5, 0.5); 
                 
-                const eggMat = new THREE.MeshStandardMaterial({color: 0xffd700, emissive: 0x886600, roughness: 0.2, metalness: 0.5});
+                // FIXED EGG: Pure 3D golden sphere to ensure iPhone rendering! No canvas texture.
+                const eggMat = new THREE.MeshStandardMaterial({color: state.eggColor, roughness: 0.2, metalness: 0.5});
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
                 egg.scale.set(0.85, 1.2, 0.85); 
                 egg.position.set(0, 1.8, 0); 
                 egg.castShadow = true;
                 
                 if (beeMaster.userData && beeMaster.userData.isCracked) {
+                    // Precision math mapped exactly to the scaled sphere's surface so it doesn't poke out!
                     const crackMat = new THREE.LineBasicMaterial({ color: 0x553300, linewidth: 3 });
                     const crackPoints = [];
                     crackPoints.push(new THREE.Vector3(0, 1.0, 1.118));
@@ -862,6 +883,7 @@
             applyBeeCustomization();
         }
         
+        // FIXED BEE HITBOX: Shrunk down dramatically so you have to tap closely, and kept transparent correctly.
         const beeHitBoxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, depthWrite: false });
         const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(2.5, 16, 16), beeHitBoxMat);
         beeHitBox.position.set(0, 1.5, 0);
@@ -941,8 +963,6 @@
             caterpillarGroup.visible = state.friendsUnlocked.caterpillar; dragonflyGroup.visible = state.friendsUnlocked.dragonfly;
             fireflyGroup.visible = state.friendsUnlocked.firefly;
         }
-        
-        // OPTIMIZED for iPhone! Small, highly efficient pattern canvas.
         function applyBeeCustomization() {
             if(state.stage !== 'adult' && state.stage !== 'child') return; 
             stripeCtx.fillStyle = state.color; stripeCtx.fillRect(0, 0, 512, 512);
@@ -976,6 +996,10 @@
             }
         }
         document.getElementById('inp-color').addEventListener('input', (e) => { state.color = e.target.value; applyBeeCustomization(); });
+        document.getElementById('sel-egg-color').addEventListener('change', (e) => { 
+            state.eggColor = e.target.value; 
+            if (state.stage === 'egg') rebuildBeeMesh(); 
+        });
         document.getElementById('sel-accessory').addEventListener('change', (e) => { state.accessory = e.target.value; applyBeeCustomization(); });
         
         const raycaster = new THREE.Raycaster();
@@ -1183,7 +1207,7 @@
                     if (state.isSleeping) {
                         state.stats.energy = Math.min(100, state.stats.energy + 1.0);
                         state.stats.tiredness = Math.max(0, state.stats.tiredness - 1.0);
-                        state.stats.hunger -= 0.005; 
+                        state.stats.hunger -= 0.005; // tiny drop overnight
                         
                         if (state.stats.nectar >= 1) { 
                             state.stats.nectar -= 1; 
@@ -1198,9 +1222,9 @@
                             logUI(`${state.name} feels completely rested and is ready to play! ☀️`);
                         }
                     } else {
-                        state.stats.hunger -= 0.01; 
+                        state.stats.hunger -= 0.01; // Healthy drain (approx 36 pts per hour)
                         if (state.stage === 'adult' || state.stage === 'child') {
-                            state.stats.energy -= 0.02; 
+                            state.stats.energy -= 0.02; // Very slow natural drain
                             state.stats.tiredness += 0.02; 
                         }
                         
@@ -1214,7 +1238,7 @@
                     }
 
                     if (state.stats.hunger <= 0) {
-                        state.stats.health -= 0.01; 
+                        state.stats.health -= 0.01; // Active health drain while starving
                         if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
                             logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
                         }
@@ -1255,7 +1279,7 @@
             if (state.friendsUnlocked.firefly && fireflyGroup.visible) { fireflyGroup.position.x = -5 + Math.sin(time * 1.2) * 5; fireflyGroup.position.z = -10 + Math.cos(time * 0.8) * 4; fireflyGroup.position.y = 4 + Math.sin(time * 3) * 1.5; fireflyGroup.children[1].material.emissiveIntensity = isNightTime ? (0.5 + Math.sin(time * 5) * 0.5) : 0; }
             childBees.forEach((child, i) => { const angle = time + (i * Math.PI/2); child.position.x = beeMaster.position.x + Math.cos(angle)*3; child.position.z = beeMaster.position.z + Math.sin(angle)*3; child.position.y = beeMaster.position.y - 1; });
             
-            const targetTreeScale = Math.min(3.0, 0.5 + (state.stats.honeyJars / 2)); 
+            const targetTreeScale = Math.min(3.0, 0.5 + (state.stats.honeyJars / 2)); // Trees grow faster!
             treeMeshes.forEach(tree => { tree.scale.lerp(new THREE.Vector3(targetTreeScale, targetTreeScale, targetTreeScale), 0.01); });
 
             if (isBeingPetted) { petTimer -= dt; if (petTimer <= 0) isBeingPetted = false; }
@@ -1299,6 +1323,7 @@
             
             const currentSpeed = beeVelocity.length();
             
+            // Render visibility based on sleep state
             if (state.isSleeping && distance < 0.5 && (state.stage === 'adult' || state.stage === 'child')) { 
                 beeMaster.visible = false; 
             } else {
@@ -1366,6 +1391,7 @@
                         state.stats.hunger = Math.min(100, state.stats.hunger + 30); 
                         state.stats.happiness = Math.min(100, state.stats.happiness + 5);
                         
+                        // Working makes her explicitly tired!
                         state.stats.energy = Math.max(0, state.stats.energy - 10);
                         state.stats.tiredness = Math.min(100, state.stats.tiredness + 10);
                         
