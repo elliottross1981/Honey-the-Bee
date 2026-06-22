@@ -14,13 +14,12 @@
             overflow: hidden;
             background: linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%);
             transition: background 2s ease; 
-            touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
         body.raining { background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%) !important; }
         body.night-mode { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; touch-action: none; }
         .glass {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(16px);
@@ -39,7 +38,7 @@
         .floating-emoji { position: absolute; pointer-events: none; animation: floatUpAndFade 2s ease-out forwards; z-index: 100; font-weight: 800; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); transform: translate(-50%, -50%); color: #334155; }
         body.night-mode .floating-emoji, body.raining .floating-emoji { color: #f8fafc; }
         .cursor-plant { cursor: crosshair !important; }
-        .btn-locked { opacity: 0.5 !important; pointer-events: none !important; transform: scale(0.98) !important; }
+        .btn-locked { opacity: 0.5 !important; pointer-events: none !important; transform: scale(0.98) !important; filter: grayscale(50%); }
     </style>
 </head>
 <body class="w-screen h-screen relative text-slate-800" id="main-body">
@@ -52,8 +51,8 @@
     <!-- EGG TIMER NOTIFICATION -->
     <div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity border-2 border-purple-200"></div>
 
-    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-auto max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
-        <div class="glass rounded-2xl p-4 shadow-lg">
+    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-none max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
+        <div class="glass rounded-2xl p-4 shadow-lg pointer-events-auto">
             
             <div class="flex justify-between items-center mb-1">
                 <h1 class="text-xl font-bold text-amber-700 flex items-center gap-1">
@@ -97,13 +96,15 @@
             </div>
         </div>
 
-        <div class="glass rounded-2xl p-4 text-sm shadow-lg">
+        <div class="glass rounded-2xl p-4 text-sm shadow-lg pointer-events-auto">
             <div class="space-y-3">
-                <div class="flex justify-between items-center">
+                
+                <div id="wrap-fuzz-color" class="flex justify-between items-center hidden">
                     <span class="font-semibold text-slate-600">Fuzz Color:</span>
                     <input type="color" id="inp-color" value="#E6A122" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
                 </div>
-                <div class="flex justify-between items-center">
+                
+                <div id="wrap-egg-color" class="flex justify-between items-center">
                     <span class="font-semibold text-slate-600">Egg Color:</span>
                     <select id="sel-egg-color" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
                         <option value="#ffd700" class="text-black">Gold</option>
@@ -115,6 +116,7 @@
                         <option value="#a855f7" class="text-black">Purple</option>
                     </select>
                 </div>
+                
                 <div class="flex justify-between items-center">
                     <span class="font-semibold text-slate-600">Accessory:</span>
                     <select id="sel-accessory" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
@@ -131,7 +133,7 @@
             </div>
         </div>
 
-        <div class="glass rounded-2xl p-3 h-28 flex flex-col shadow-lg">
+        <div class="glass rounded-2xl p-3 h-28 flex flex-col shadow-lg pointer-events-auto">
             <h2 class="font-bold text-slate-700 text-xs mb-1 uppercase tracking-wide">Diary</h2>
             <div id="log-container" class="flex-1 overflow-y-auto custom-scroll text-xs text-slate-700 space-y-2 pr-2 flex flex-col"></div>
         </div>
@@ -141,7 +143,7 @@
 
     <div class="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-96 flex gap-3 z-40 pointer-events-auto">
         <!-- Buttons are strictly locked by default to prevent early clicks while loading -->
-        <button id="btn-treat" class="flex-1 py-3 rounded-2xl bg-pink-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">💧 Loading...</button>
+        <button id="btn-treat" class="flex-1 py-3 rounded-2xl bg-pink-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">💧 Food (Waiting)</button>
         <button id="btn-seed" class="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">🌱 Plant Seed</button>
     </div>
 
@@ -174,7 +176,7 @@
             hiveLevel: 1, 
             children: 0,           
             color: '#E6A122', 
-            eggColor: '#ffd700',
+            eggColor: '#ffd700', // Default Egg Color
             accessory: 'none',
             audioEnabled: false,
             isSleeping: false,
@@ -215,7 +217,6 @@
             state.totalNectarGathered = 0;
             state.larvaFood = 0;
             state.childNectar = 0;
-            state.hourly = { timestamp: Date.now(), count: 0 };
             state.stats.health = 100;
             state.stats.hunger = 100;
             state.stats.energy = 100;
@@ -315,20 +316,25 @@
             const treatBtn = document.getElementById('btn-treat');
             const seedBtn = document.getElementById('btn-seed');
             
-            if (state.stage === 'egg') { 
+            // Toggle visibility of Egg Color vs Fuzz Color in the menu!
+            if (state.stage === 'egg') {
+                document.getElementById('wrap-egg-color').classList.remove('hidden');
+                document.getElementById('wrap-fuzz-color').classList.add('hidden');
                 treatBtn.innerText = "💧 Food (Waiting)"; 
                 treatBtn.classList.add('btn-locked');
                 seedBtn.classList.add('btn-locked');
-            }
-            else if (state.stage === 'larva') { 
-                treatBtn.innerText = "💧 Feed Royal Jelly"; 
-                treatBtn.classList.remove('btn-locked');
-                seedBtn.classList.add('btn-locked');
-            }
-            else if (state.stage === 'child' || state.stage === 'adult') { 
-                treatBtn.innerText = "💧 Sugar Water"; 
-                treatBtn.classList.remove('btn-locked');
-                seedBtn.classList.remove('btn-locked');
+            } else {
+                document.getElementById('wrap-egg-color').classList.add('hidden');
+                document.getElementById('wrap-fuzz-color').classList.remove('hidden');
+                if (state.stage === 'larva') { 
+                    treatBtn.innerText = "💧 Feed Royal Jelly"; 
+                    treatBtn.classList.remove('btn-locked');
+                    seedBtn.classList.add('btn-locked');
+                } else if (state.stage === 'child' || state.stage === 'adult') { 
+                    treatBtn.innerText = "💧 Sugar Water"; 
+                    treatBtn.classList.remove('btn-locked');
+                    seedBtn.classList.remove('btn-locked');
+                }
             }
             
             if (state.stage === 'adult') {
@@ -358,7 +364,7 @@
             state.childNectar = data.childNectar || 0;
             
             state.color = data.color || state.color;
-            state.eggColor = data.eggColor || '#ffd700';
+            state.eggColor = data.eggColor || '#ffd700'; // Load saved egg color!
             state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
             state.seeds = data.seeds || [];
             
@@ -367,19 +373,21 @@
                 const hoursOffline = msOffline / (1000 * 60 * 60);
                 
                 if (hoursOffline > 0.1) {
-                    // Safe, slow drain designed specifically for a 24-hour check-in cycle
-                    state.stats.hunger -= (hoursOffline * 1.5); 
+                    const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
+                    const hoursUntilStarving = startingHunger / 36.0;
                     
-                    if (state.stats.hunger <= 0) {
-                        const remainingHours = hoursOffline - (data.stats.hunger / 1.5);
-                        state.stats.health -= (remainingHours * 2.0); // Health drains if starved
+                    if (hoursOffline > hoursUntilStarving) {
                         state.stats.hunger = 0;
+                        const starvingHours = hoursOffline - hoursUntilStarving;
+                        state.stats.health -= (starvingHours * 18.0); // Health drains if starved
+                    } else {
+                        state.stats.hunger -= (hoursOffline * 36.0); // 36 per hour natural drain
                     }
                     
                     state.stats.energy = 100; 
                     
                     if (state.stats.health <= 0) {
-                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
+                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted to an egg to heal!`);
                     } else {
                         logUI(`Welcome back! ${state.name} missed you and is getting a little hungry.`);
                     }
@@ -782,15 +790,14 @@
             if (state.stage === 'egg') {
                 beeMaster.scale.set(0.5, 0.5, 0.5); 
                 
-                // FIXED EGG: Pure 3D golden sphere to ensure iPhone rendering! No canvas texture.
-                const eggMat = new THREE.MeshStandardMaterial({color: state.eggColor, roughness: 0.2, metalness: 0.5});
+                // Color now dynamically applies here!
+                const eggMat = new THREE.MeshStandardMaterial({color: state.eggColor || '#ffd700', emissive: 0x222222, roughness: 0.2, metalness: 0.2});
                 const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
                 egg.scale.set(0.85, 1.2, 0.85); 
                 egg.position.set(0, 1.8, 0); 
                 egg.castShadow = true;
                 
                 if (beeMaster.userData && beeMaster.userData.isCracked) {
-                    // Precision math mapped exactly to the scaled sphere's surface so it doesn't poke out!
                     const crackMat = new THREE.LineBasicMaterial({ color: 0x553300, linewidth: 3 });
                     const crackPoints = [];
                     crackPoints.push(new THREE.Vector3(0, 1.0, 1.118));
@@ -810,7 +817,11 @@
                 targetPosition.copy(beeMaster.position);
             } 
             else if (state.stage === 'larva') {
-                beeMaster.scale.set(0.8, 0.8, 0.8); 
+                // Growth Factor calculation based on exactly 24 hours
+                const growthFactor = Math.min(1.0, Math.max(0, (Date.now() - state.stageStart) / (24 * 3600000)));
+                const larvaScale = 0.3 + (0.5 * growthFactor); // Will smoothly grow from 0.3 to 0.8!
+                beeMaster.scale.set(larvaScale, larvaScale, larvaScale); 
+                
                 const larvaGroup = new THREE.Group();
                 const grubMat = new THREE.MeshStandardMaterial({color: 0xfffacd, roughness: 0.5}); 
                 for(let i=0; i<4; i++) {
@@ -995,10 +1006,12 @@
                 const mid = new THREE.Mesh(new THREE.SphereGeometry(0.15), mat); bt.add(left, right, mid); bt.position.set(0, -1.0, 0.8); currentAccessoryMesh = bt; accessories.add(bt); 
             }
         }
+        
+        // Listeners for Color Swaps
         document.getElementById('inp-color').addEventListener('input', (e) => { state.color = e.target.value; applyBeeCustomization(); });
         document.getElementById('sel-egg-color').addEventListener('change', (e) => { 
             state.eggColor = e.target.value; 
-            if (state.stage === 'egg') rebuildBeeMesh(); 
+            if(state.stage === 'egg') rebuildBeeMesh(); 
         });
         document.getElementById('sel-accessory').addEventListener('change', (e) => { state.accessory = e.target.value; applyBeeCustomization(); });
         
@@ -1021,7 +1034,7 @@
         let timeSinceLastFlower = 0; 
 
         document.getElementById('btn-seed').addEventListener('click', () => {
-            if (state.stage === 'egg' || state.stage === 'larva') { logUI("Only winged bees can help grow seeds! 🌱"); return; }
+            if (state.stage === 'egg' || state.stage === 'larva') { return; }
             if (state.seeds.length >= 4) { logUI("You already have 4 magic seeds growing! 🌱"); return; }
             isPlantingSeed = true; document.body.classList.add('cursor-plant'); logUI(`Tap anywhere to plant a seed! (${state.seeds.length}/4 planted)`);
         });
