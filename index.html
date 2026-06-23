@@ -217,6 +217,7 @@
             state.totalNectarGathered = 0;
             state.larvaFood = 0;
             state.childNectar = 0;
+            state.hourly = { timestamp: Date.now(), count: 0 };
             state.stats.health = 100;
             state.stats.hunger = 100;
             state.stats.energy = 100;
@@ -373,21 +374,21 @@
                 const hoursOffline = msOffline / (1000 * 60 * 60);
                 
                 if (hoursOffline > 0.1) {
+                    // Safe, slow drain designed specifically for a 24-hour check-in cycle!
                     const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
-                    const hoursUntilStarving = startingHunger / 36.0;
                     
-                    if (hoursOffline > hoursUntilStarving) {
+                    state.stats.hunger -= (hoursOffline * 1.5); 
+                    
+                    if (state.stats.hunger <= 0) {
+                        const remainingHours = hoursOffline - (startingHunger / 1.5);
+                        state.stats.health -= (remainingHours * 2.0); // Health drains if starved
                         state.stats.hunger = 0;
-                        const starvingHours = hoursOffline - hoursUntilStarving;
-                        state.stats.health -= (starvingHours * 18.0); // Health drains if starved
-                    } else {
-                        state.stats.hunger -= (hoursOffline * 36.0); // 36 per hour natural drain
                     }
                     
                     state.stats.energy = 100; 
                     
                     if (state.stats.health <= 0) {
-                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted to an egg to heal!`);
+                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
                     } else {
                         logUI(`Welcome back! ${state.name} missed you and is getting a little hungry.`);
                     }
@@ -1256,7 +1257,7 @@
                             logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
                         }
                         if (state.stats.health <= 0) {
-                            resetToEgg(`${state.name} fainted from hunger and reverted back into an egg to heal!`); 
+                            resetToEgg(`${state.name} fainted from hunger and reverted into an egg to heal!`); 
                         }
                     } else {
                         state.stats.health = Math.min(100, state.stats.health + 0.1); 
