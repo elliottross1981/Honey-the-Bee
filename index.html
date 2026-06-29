@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,6 +49,7 @@ body.night-mode .floating-emoji, body.raining .floating-emoji { color: #f8fafc; 
     <button id="toggle-audio" class="pointer-events-auto p-2 rounded-full bg-white/50 hover:bg-white/80 transition-colors shadow-sm text-lg active:scale-95" title="Toggle Buzz Sound">🔇</button>
 </div>
 
+<!-- EGG TIMER NOTIFICATION -->
 <div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity border-2 border-purple-200"></div>
 
 <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-auto max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
@@ -403,31 +405,38 @@ function applyLoadedData(data) {
     state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
     state.seeds = data.seeds || [];
 
+    // STRICT 5% OFFLINE DECAY CALCULATIONS
     if (data.lastSaved && state.stage !== 'egg') {
         const msOffline = Date.now() - new Date(data.lastSaved).getTime();
         const hoursOffline = msOffline / (1000 * 60 * 60);
 
-        if (hoursOffline > 0.1) {
-            const offlineHungerDrain = 1.5;
-            const offlineHealthDrain = 0.5;
+        if (hoursOffline > 0.05) { // Only calculate if they've been gone for at least a few minutes
+            const hourlyDrain = 5.0; // Exactly 5% per hour
 
-            const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
-            const hoursUntilStarving = startingHunger / offlineHungerDrain;
+            // Drain Happiness
+            state.stats.happiness = Math.max(0, (state.stats.happiness || 100) - (hoursOffline * hourlyDrain));
 
-            if (hoursOffline > hoursUntilStarving) {
-                state.stats.hunger = 0;
-                const starvingHours = hoursOffline - hoursUntilStarving;
-                state.stats.health -= (starvingHours * offlineHealthDrain);
+            // Drain Hunger and potentially Health
+            const startingHunger = state.stats.hunger !== undefined ? state.stats.hunger : 100;
+            const totalHungerLoss = hoursOffline * hourlyDrain;
+
+            if (startingHunger > totalHungerLoss) {
+                // They just lost some hunger, health is untouched
+                state.stats.hunger = startingHunger - totalHungerLoss;
             } else {
-                state.stats.hunger -= (hoursOffline * offlineHungerDrain);
+                // Hunger hit 0%, the remaining time drains their health
+                state.stats.hunger = 0;
+                const hoursStarving = hoursOffline - (startingHunger / hourlyDrain);
+                state.stats.health = (state.stats.health || 100) - (hoursStarving * hourlyDrain);
             }
 
+            // Energy recovers perfectly while they are away
             state.stats.energy = 100;
 
             if (state.stats.health <= 0) {
-                resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
-            } else {
-                logUI(`Welcome back! ${state.name} rested peacefully and is getting hungry.`);
+                resetToEgg(`${state.name} got too hungry while you were away and reverted into an egg to heal!`);
+            } else if (hoursOffline >= 1.0) {
+                logUI(`Welcome back! ${state.name} missed you and got a little hungry.`);
             }
         }
     }
@@ -452,7 +461,7 @@ function applyLoadedData(data) {
 }
 
 // Brand new save key to make sure we don't accidentally load old broken quotas!
-const SAVE_KEY = 'save_v22';
+const SAVE_KEY = 'save_v23';
 
 if (firebaseConfig) {
     const app = initializeApp(firebaseConfig);
@@ -1289,7 +1298,9 @@ function animate() {
             if (state.isSleeping) {
                 state.stats.energy = Math.min(100, state.stats.energy + 1.0);
                 state.stats.tiredness = Math.max(0, state.stats.tiredness - 1.0);
-                state.stats.hunger -= 0.005; // tiny drop overnight
+                
+                // Extremely slow hunger drain while safe in the hive
+                state.stats.hunger -= 0.005; 
 
                 if (state.stats.nectar >= 1) {
                     state.stats.nectar -= 1;
@@ -1304,14 +1315,17 @@ function animate() {
                     logUI(`${state.name} feels completely rested and is ready to play! ☀️`);
                 }
             } else {
-                state.stats.hunger -= 0.01; 
-                if (state.stage === 'adult' || state.stage === 'child') {
-                    state.stats.energy -= 0.02; 
-                    state.stats.tiredness += 0.02;
-                }
+                // STRICT 5% HOURLY DECAY TRANSLATED TO REAL-TIME SECONDS
+                // 5% per hour = 5 / 3600 seconds = ~0.00138 per second
+                const tickDrain = 5.0 / 3600;
 
-                if (state.stats.hunger < 30 || state.stats.energy < 20) state.stats.happiness -= 0.5;
-                else if (state.stats.happiness < 100) state.stats.happiness += 0.1;
+                state.stats.hunger -= tickDrain;
+                state.stats.happiness -= tickDrain;
+
+                if (state.stage === 'adult' || state.stage === 'child') {
+                    state.stats.energy -= tickDrain * 4; // Energy drains a bit faster so she goes to sleep
+                    state.stats.tiredness += tickDrain * 4;
+                }
 
                 if (state.stats.tiredness > 75 && time - lastSleepPrompt > 60 && (state.stage === 'adult' || state.stage === 'child')) {
                     logUI(`${state.name} is getting very tired. 🥱 Tap the hive for bedtime?`);
@@ -1319,8 +1333,11 @@ function animate() {
                 }
             }
 
+            // Health drains at the same 5% rate ONLY if she is totally starving
             if (state.stats.hunger <= 0) {
-                state.stats.health -= 0.01; 
+                const tickDrain = 5.0 / 3600;
+                state.stats.health -= tickDrain; 
+                
                 if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
                     logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
                 }
@@ -1328,7 +1345,9 @@ function animate() {
                     resetToEgg(`${state.name} fainted from hunger and reverted to an egg to heal!`);
                 }
             } else {
-                state.stats.health = Math.min(100, state.stats.health + 0.1);
+                // If she has food, she heals slowly
+                const tickDrain = 5.0 / 3600;
+                state.stats.health = Math.min(100, state.stats.health + (tickDrain * 2));
             }
 
             if (!state.isSleeping && state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child')) {
@@ -1514,3 +1533,5 @@ isSceneReady = true; rebuildBeeMesh(); applyLoadedData(state); renderSeeds(); se
 </script>
 </body>
 </html>
+
+```
