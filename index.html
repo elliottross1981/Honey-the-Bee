@@ -1,1435 +1,1516 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Honey the Virtual Bee</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
-        body {
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            background: linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%);
-            transition: background 2s ease; 
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        body.raining { background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%) !important; }
-        body.night-mode { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; touch-action: none; }
-        .glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-            transition: background 2s ease, border 2s ease;
-        }
-        body.night-mode .glass, body.raining .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: #f1f5f9; }
-        body.night-mode .text-slate-600, body.raining .text-slate-600 { color: #cbd5e1; }
-        body.night-mode h1, body.raining h1 { color: #fcd34d; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        @keyframes floatUpAndFade { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { opacity: 1; transform: translateY(-10px) scale(1.2); } 100% { transform: translateY(-60px) scale(1.5); opacity: 0; } }
-        .floating-emoji { position: absolute; pointer-events: none; animation: floatUpAndFade 2s ease-out forwards; z-index: 100; font-weight: 800; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); transform: translate(-50%, -50%); color: #334155; }
-        body.night-mode .floating-emoji, body.raining .floating-emoji { color: #f8fafc; }
-        .cursor-plant { cursor: crosshair !important; }
-        .btn-locked { opacity: 0.5 !important; pointer-events: none !important; transform: scale(0.98) !important; filter: grayscale(50%); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Honey the Virtual Bee</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
+body {
+    font-family: 'Nunito', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%);
+    transition: background 2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+body.raining { background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%) !important; }
+body.night-mode { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important; }
+#canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; touch-action: none; }
+.glass {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    transition: background 2s ease, border 2s ease;
+}
+body.night-mode .glass, body.raining .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: #f1f5f9; }
+body.night-mode .text-slate-600, body.raining .text-slate-600 { color: #cbd5e1; }
+body.night-mode h1, body.raining h1 { color: #fcd34d; }
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+@keyframes floatUpAndFade { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { opacity: 1; transform: translateY(-10px) scale(1.2); } 100% { transform: translateY(-60px) scale(1.5); opacity: 0; } }
+.floating-emoji { position: absolute; pointer-events: none; animation: floatUpAndFade 2s ease-out forwards; z-index: 100; font-weight: 800; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); transform: translate(-50%, -50%); color: #334155; }
+body.night-mode .floating-emoji, body.raining .floating-emoji { color: #f8fafc; }
+.cursor-plant { cursor: crosshair !important; }
+.btn-locked { opacity: 0.5 !important; pointer-events: none !important; transform: scale(0.98) !important; filter: grayscale(50%); }
+</style>
 </head>
 <body class="w-screen h-screen relative text-slate-800" id="main-body">
-    <div id="canvas-container"></div>
-    <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-50 pointer-events-none">
-        <button id="btn-toggle-menu" class="pointer-events-auto glass px-4 py-2 rounded-full font-bold text-amber-700 shadow-md text-sm flex items-center gap-2 active:scale-95 transition">📊 Stats & Menu</button>
-        <button id="toggle-audio" class="pointer-events-auto p-2 rounded-full bg-white/50 hover:bg-white/80 transition-colors shadow-sm text-lg active:scale-95" title="Toggle Buzz Sound">🔇</button>
-    </div>
+<div id="canvas-container"></div>
+<div class="absolute top-4 left-4 right-4 flex justify-between items-start z-50 pointer-events-none">
+    <button id="btn-toggle-menu" class="pointer-events-auto glass px-4 py-2 rounded-full font-bold text-amber-700 shadow-md text-sm flex items-center gap-2 active:scale-95 transition">📊 Stats & Menu</button>
+    <button id="toggle-audio" class="pointer-events-auto p-2 rounded-full bg-white/50 hover:bg-white/80 transition-colors shadow-sm text-lg active:scale-95" title="Toggle Buzz Sound">🔇</button>
+</div>
 
-    <!-- EGG TIMER NOTIFICATION -->
-    <div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity border-2 border-purple-200"></div>
+<div id="egg-timer" class="absolute top-20 left-1/2 -translate-x-1/2 text-center text-sm font-bold text-purple-700 bg-white/90 px-4 py-1.5 rounded-full shadow-md z-40 pointer-events-none hidden transition-opacity border-2 border-purple-200"></div>
 
-    <div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-auto max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
-        <div class="glass rounded-2xl p-4 shadow-lg">
-            <div class="flex justify-between items-center mb-1">
-                <h1 class="text-xl font-bold text-amber-700 flex items-center gap-1">
-                    🐝 <input type="text" id="inp-bee-name" value="Honey" class="bg-transparent border-b border-amber-300 w-28 outline-none font-bold text-amber-700 placeholder-amber-400 text-center" /> <span class="text-sm cursor-pointer" title="Edit Name">✏️</span>
-                </h1>
-            </div>
-            
-            <div class="flex justify-between items-center mb-3 pb-2 border-b border-black/10 text-xs">
-                <span class="font-semibold text-slate-600 flex flex-col">
-                    <span id="sync-status" class="text-emerald-600">☁️ Cloud Sync Active</span>
-                    <span class="mt-1">Hatched: <span id="val-dob" class="font-bold text-amber-600"></span></span>
-                </span>
-                <span id="life-stage" class="font-bold text-purple-600 px-2 py-1 bg-purple-100 rounded self-start">Stage: Egg</span>
-            </div>
-            
-            <div class="space-y-3">
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Health</span><span id="val-health">100%</span></div>
-                    <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-health" class="h-full bg-red-500 rounded-full transition-all duration-300 w-full"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Energy</span><span id="val-energy">100%</span></div>
-                    <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-energy" class="h-full bg-amber-400 rounded-full transition-all duration-300 w-full"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Hunger</span><span id="val-hunger">100%</span></div>
-                    <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-hunger" class="h-full bg-green-400 rounded-full transition-all duration-300 w-full"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Happiness</span><span id="val-happiness">100%</span></div>
-                    <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-happiness" class="h-full bg-pink-400 rounded-full transition-all duration-300 w-full"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Tiredness</span><span id="val-tiredness">0%</span></div>
-                    <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-tiredness" class="h-full bg-blue-400 rounded-full transition-all duration-300 w-0"></div></div>
-                </div>
-                <div class="pt-2 border-t border-black/10 flex justify-between items-center">
-                    <div class="flex flex-col"><span class="text-xs font-bold uppercase tracking-wide text-slate-600">Nectar Gathered</span><span id="val-nectar" class="font-bold text-amber-500">0 drops</span></div>
-                    <div class="flex flex-col text-right"><span class="text-xs font-bold uppercase tracking-wide text-slate-600">Honey Made</span><span id="val-honey" class="font-bold text-amber-500 text-lg">0.00 🍯</span></div>
-                </div>
-            </div>
+<div id="dashboard-panel" class="absolute top-16 left-4 right-4 md:left-auto md:right-4 md:w-80 flex flex-col gap-3 z-40 pointer-events-auto max-h-[75vh] overflow-y-auto custom-scroll pb-2 transition-opacity hidden">
+    <div class="glass rounded-2xl p-4 shadow-lg">
+        <div class="flex justify-between items-center mb-1">
+            <h1 class="text-xl font-bold text-amber-700 flex items-center gap-1">
+                🐝 <input type="text" id="inp-bee-name" value="Honey" class="bg-transparent border-b border-amber-300 w-28 outline-none font-bold text-amber-700 placeholder-amber-400 text-center" /> <span class="text-sm cursor-pointer" title="Edit Name">✏️</span>
+            </h1>
         </div>
 
-        <div class="glass rounded-2xl p-4 text-sm shadow-lg">
-            <div class="space-y-3">
-                <div id="wrap-fuzz-color" class="flex justify-between items-center hidden">
-                    <span class="font-semibold text-slate-600">Fuzz Color:</span>
-                    <input type="color" id="inp-color" value="#E6A122" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
-                </div>
-                <div id="wrap-egg-color" class="flex justify-between items-center">
-                    <span class="font-semibold text-slate-600">Egg Color:</span>
-                    <select id="sel-egg-color" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
-                        <option value="#ffd700" class="text-black">Gold</option>
-                        <option value="#facc15" class="text-black">Yellow</option>
-                        <option value="#ff69b4" class="text-black">Pink</option>
-                        <option value="#60a5fa" class="text-black">Blue</option>
-                        <option value="#f97316" class="text-black">Orange</option>
-                        <option value="#ef4444" class="text-black">Red</option>
-                        <option value="#a855f7" class="text-black">Purple</option>
-                    </select>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="font-semibold text-slate-600">Accessory:</span>
-                    <select id="sel-accessory" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
-                        <option value="none" class="text-black">None</option>
-                        <option value="tophat" class="text-black">Top Hat</option>
-                        <option value="crown" class="text-black">Gold Crown</option>
-                        <option value="flowercrown" class="text-black">Flower Crown</option>
-                        <option value="bowtie" class="text-black">Red Bow Tie</option>
-                    </select>
-                </div>
-                <div class="pt-2 border-t border-black/10 text-center">
-                    <button id="btn-reset" class="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded shadow-sm transition">Reset All Game Data</button>
-                </div>
-            </div>
+        <div class="flex justify-between items-center mb-3 pb-2 border-b border-black/10 text-xs">
+            <span class="font-semibold text-slate-600 flex flex-col">
+                <span id="sync-status" class="text-emerald-600">☁️ Cloud Sync Active</span>
+                <span class="mt-1">Hatched: <span id="val-dob" class="font-bold text-amber-600"></span></span>
+            </span>
+            <span id="life-stage" class="font-bold text-purple-600 px-2 py-1 bg-purple-100 rounded self-start">Stage: Egg</span>
         </div>
 
-        <div class="glass rounded-2xl p-3 h-32 flex flex-col shadow-lg">
-            <h2 class="font-bold text-slate-700 text-xs mb-1 uppercase tracking-wide">Diary</h2>
-            <div id="log-container" class="flex-1 overflow-y-auto custom-scroll text-xs text-slate-700 space-y-2 pr-2 flex flex-col"></div>
+        <div class="space-y-3">
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Health</span><span id="val-health">100%</span></div>
+                <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-health" class="h-full bg-red-500 rounded-full transition-all duration-300 w-full"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Energy</span><span id="val-energy">100%</span></div>
+                <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-energy" class="h-full bg-amber-400 rounded-full transition-all duration-300 w-full"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Hunger</span><span id="val-hunger">100%</span></div>
+                <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-hunger" class="h-full bg-green-400 rounded-full transition-all duration-300 w-full"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Happiness</span><span id="val-happiness">100%</span></div>
+                <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-happiness" class="h-full bg-pink-400 rounded-full transition-all duration-300 w-full"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wide text-slate-600"><span>Tiredness</span><span id="val-tiredness">0%</span></div>
+                <div class="h-2.5 w-full bg-black/10 rounded-full overflow-hidden shadow-inner"><div id="bar-tiredness" class="h-full bg-blue-400 rounded-full transition-all duration-300 w-0"></div></div>
+            </div>
+            <div class="pt-2 border-t border-black/10 flex justify-between items-center">
+                <div class="flex flex-col"><span class="text-xs font-bold uppercase tracking-wide text-slate-600">Nectar Gathered</span><span id="val-nectar" class="font-bold text-amber-500">0 drops</span></div>
+                <div class="flex flex-col text-right"><span class="text-xs font-bold uppercase tracking-wide text-slate-600">Honey Made</span><span id="val-honey" class="font-bold text-amber-500 text-lg">0.00 🍯</span></div>
+            </div>
         </div>
     </div>
 
-    <div id="seed-timer" class="absolute bottom-24 left-0 w-full text-center text-sm font-bold text-emerald-800 drop-shadow-md hidden z-40 pointer-events-none bg-white/50 py-1"></div>
-
-    <div class="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-96 flex gap-3 z-40 pointer-events-auto">
-        <button id="btn-treat" class="flex-1 py-3 rounded-2xl bg-pink-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">💧 Food (Waiting)</button>
-        <button id="btn-seed" class="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">🌱 Plant Seed</button>
+    <div class="glass rounded-2xl p-4 text-sm shadow-lg">
+        <div class="space-y-3">
+            <div id="wrap-fuzz-color" class="flex justify-between items-center hidden">
+                <span class="font-semibold text-slate-600">Fuzz Color:</span>
+                <input type="color" id="inp-color" value="#E6A122" class="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent">
+            </div>
+            <div id="wrap-egg-color" class="flex justify-between items-center">
+                <span class="font-semibold text-slate-600">Egg Color:</span>
+                <select id="sel-egg-color" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
+                    <option value="#ffd700" class="text-black">Gold</option>
+                    <option value="#facc15" class="text-black">Yellow</option>
+                    <option value="#ff69b4" class="text-black">Pink</option>
+                    <option value="#60a5fa" class="text-black">Blue</option>
+                    <option value="#f97316" class="text-black">Orange</option>
+                    <option value="#ef4444" class="text-black">Red</option>
+                    <option value="#a855f7" class="text-black">Purple</option>
+                </select>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="font-semibold text-slate-600">Accessory:</span>
+                <select id="sel-accessory" class="bg-white/50 border border-black/10 rounded px-2 py-1 outline-none">
+                    <option value="none" class="text-black">None</option>
+                    <option value="tophat" class="text-black">Top Hat</option>
+                    <option value="crown" class="text-black">Gold Crown</option>
+                    <option value="flowercrown" class="text-black">Flower Crown</option>
+                    <option value="bowtie" class="text-black">Red Bow Tie</option>
+                </select>
+            </div>
+            <div class="pt-2 border-t border-black/10 text-center">
+                <button id="btn-reset" class="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded shadow-sm transition">Reset All Game Data</button>
+            </div>
+        </div>
     </div>
 
-    <script type="module">
-        const menuBtn = document.getElementById('btn-toggle-menu');
-        const dashboard = document.getElementById('dashboard-panel');
-        let menuOpen = false; 
-        if (!menuOpen) dashboard.classList.add('hidden');
-        menuBtn.addEventListener('click', () => {
-            menuOpen = !menuOpen;
-            if (menuOpen) { dashboard.classList.remove('hidden'); menuBtn.innerHTML = '❌ Close Menu'; } 
-            else { dashboard.classList.add('hidden'); menuBtn.innerHTML = '📊 Stats & Menu'; }
-        });
+    <div class="glass rounded-2xl p-3 h-32 flex flex-col shadow-lg">
+        <h2 class="font-bold text-slate-700 text-xs mb-1 uppercase tracking-wide">Diary</h2>
+        <div id="log-container" class="flex-1 overflow-y-auto custom-scroll text-xs text-slate-700 space-y-2 pr-2 flex flex-col"></div>
+    </div>
+</div>
 
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-        
-        let db, auth, currentUser;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        
-        const state = {
-            name: 'Honey',
-            birthDate: Date.now(), 
-            totalFood: 0,
-            totalNectarGathered: 0,          
-            stage: 'egg',          
-            hiveUnlocked: false,
-            hiveLevel: 1, 
-            children: 0,           
-            color: '#E6A122', 
-            eggColor: '#ffd700',
-            accessory: 'none',
-            audioEnabled: false,
-            isSleeping: false,
-            stageStart: Date.now(),
-            larvaFood: 0,
-            childNectar: 0,
-            hourly: { timestamp: Date.now(), count: 0 }, 
-            friendsUnlocked: { butterfly: false, ladybug: false, caterpillar: false, dragonfly: false, firefly: false },
-            seeds: [], 
-            stats: { health: 100, energy: 100, hunger: 100, happiness: 100, tiredness: 0, nectar: 0, honeyJars: 0 } 
-        };
-        
-        let isSceneReady = false;
+<div id="seed-timer" class="absolute bottom-24 left-0 w-full text-center text-sm font-bold text-emerald-800 drop-shadow-md hidden z-40 pointer-events-none bg-white/50 py-1"></div>
 
-        document.getElementById('inp-bee-name').addEventListener('change', (e) => {
-            state.name = e.target.value;
-            logUI(`Name officially changed to ${state.name}! ✨`);
-        });
+<div class="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-96 flex gap-3 z-40 pointer-events-auto">
+    <button id="btn-treat" class="flex-1 py-3 rounded-2xl bg-pink-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">💧 Food (Waiting)</button>
+    <button id="btn-seed" class="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-bold shadow-lg transition-all duration-300 text-sm border-2 border-white/20 btn-locked">🌱 Plant Seed</button>
+</div>
 
-        function checkHourlyLimit() {
-            if (Date.now() - state.hourly.timestamp >= 3600000) {
-                state.hourly.timestamp = Date.now();
-                state.hourly.count = 0;
+<script type="module">
+const menuBtn = document.getElementById('btn-toggle-menu');
+const dashboard = document.getElementById('dashboard-panel');
+let menuOpen = false;
+if (!menuOpen) dashboard.classList.add('hidden');
+menuBtn.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    if (menuOpen) { dashboard.classList.remove('hidden'); menuBtn.innerHTML = '❌ Close Menu'; }
+    else { dashboard.classList.add('hidden'); menuBtn.innerHTML = '📊 Stats & Menu'; }
+});
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+let db, auth, currentUser;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+// Clean state block for the new GDD logic
+const state = {
+    name: 'Honey',
+    birthDate: Date.now(),
+    totalFood: 0,
+    totalNectarGathered: 0,
+    stage: 'egg',
+    stageStart: Date.now(),
+    
+    // Brand new trackers for exact GDD rules!
+    larvaDay: 1, 
+    childDay: 1,
+    dailyFeeds: 0, 
+
+    hiveUnlocked: false,
+    hiveLevel: 1,
+    children: 0,
+    color: '#E6A122',
+    eggColor: '#ffd700',
+    accessory: 'none',
+    audioEnabled: false,
+    isSleeping: false,
+    hourly: { timestamp: Date.now(), count: 0 },
+    friendsUnlocked: { butterfly: false, ladybug: false, caterpillar: false, dragonfly: false, firefly: false },
+    seeds: [],
+    stats: { health: 100, energy: 100, hunger: 100, happiness: 100, tiredness: 0, nectar: 0, honeyJars: 0 }
+};
+
+let isSceneReady = false;
+
+document.getElementById('inp-bee-name').addEventListener('change', (e) => {
+    state.name = e.target.value;
+    logUI(`Name officially changed to ${state.name}! ✨`);
+});
+
+function checkHourlyLimit() {
+    if (Date.now() - state.hourly.timestamp >= 3600000) {
+        state.hourly.timestamp = Date.now();
+        state.hourly.count = 0;
+    }
+    if (state.hourly.count >= 5) {
+        logUI(`⚠️ ${state.name} is too full right now! Please wait a little while.`);
+        return false;
+    }
+    state.hourly.count++;
+    return true;
+}
+
+function resetToEgg(reasonMessage) {
+    state.stage = 'egg';
+    state.birthDate = Date.now();
+    state.stageStart = Date.now();
+    state.totalFood = 0;
+    state.totalNectarGathered = 0;
+    state.dailyFeeds = 0;
+    state.larvaDay = 1;
+    state.childDay = 1;
+    state.hourly = { timestamp: Date.now(), count: 0 };
+    state.stats.health = 100;
+    state.stats.hunger = 100;
+    state.stats.energy = 100;
+    state.stats.happiness = 100;
+    state.stats.tiredness = 0;
+    state.isSleeping = false;
+    if (beeMaster && beeMaster.userData) beeMaster.userData.isCracked = false;
+    rebuildBeeMesh();
+    if(reasonMessage) logUI(`💀 Oh no! ${reasonMessage}`);
+}
+
+function calculateStage() {
+    const now = Date.now();
+    const hoursOld = (now - state.birthDate) / 3600000;
+    state.totalNectarGathered = state.totalNectarGathered || 0;
+
+    let newStage = state.stage;
+
+    // 1. Egg Stage
+    if (state.stage === 'egg') {
+        if (hoursOld >= 1.0) {
+            newStage = 'larva';
+            state.stageStart = now;
+            state.dailyFeeds = 0;
+            state.larvaDay = 1;
+        } else if (hoursOld >= 0.5 && typeof rebuildBeeMesh === 'function') {
+            if (beeMaster && beeMaster.userData && !beeMaster.userData.isCracked) {
+                beeMaster.userData.isCracked = true;
+                rebuildBeeMesh();
+                logUI(`The egg is starting to crack! Something is going to hatch soon...`);
             }
-            if (state.hourly.count >= 5) {
-                logUI(`⚠️ ${state.name} is too full to eat right now! Please wait a little while.`);
-                return false;
-            }
-            state.hourly.count++;
-            return true;
         }
+    }
+    // 2. Larva Stage (3 Days)
+    else if (state.stage === 'larva') {
+        let hoursInStage = (now - state.stageStart) / 3600000;
         
-        function resetToEgg(reasonMessage) {
-            state.stage = 'egg';
-            state.birthDate = Date.now();
-            state.stageStart = Date.now();
-            state.totalFood = 0;
-            state.totalNectarGathered = 0;
-            state.larvaFood = 0;
-            state.childNectar = 0;
-            state.hourly = { timestamp: Date.now(), count: 0 };
-            state.stats.health = 100;
-            state.stats.hunger = 100;
-            state.stats.energy = 100;
-            state.stats.happiness = 100;
-            state.stats.tiredness = 0;
-            state.isSleeping = false; 
-            if (beeMaster && beeMaster.userData) beeMaster.userData.isCracked = false;
-            rebuildBeeMesh();
-            if(reasonMessage) logUI(`💀 Oh no! ${reasonMessage}`);
-        }
-
-        function calculateStage() {
-            const ageMs = Date.now() - state.birthDate;
-            const hoursOld = ageMs / (1000 * 60 * 60);
-            state.totalNectarGathered = state.totalNectarGathered || 0;
-            
-            let newStage = state.stage;
-            
-            // 1. Egg Stage
-            if (state.stage === 'egg') {
-                if (hoursOld >= 1.0) {
-                    newStage = 'larva';
-                    state.stageStart = Date.now();
-                    state.larvaFood = 0;
-                } else if (hoursOld >= 0.5 && typeof rebuildBeeMesh === 'function') {
-                    if (beeMaster && beeMaster.userData && !beeMaster.userData.isCracked) {
-                        beeMaster.userData.isCracked = true;
-                        rebuildBeeMesh();
-                        logUI(`The egg is starting to crack! Something is going to hatch soon...`);
-                    }
-                }
-            } 
-            // 2. Larva Stage
-            else if (state.stage === 'larva') {
-                const larvaHours = (Date.now() - state.stageStart) / 3600000;
-                if (larvaHours >= 24) {
-                    if (state.larvaFood < 30) {
-                        resetToEgg(`${state.name} didn't get enough Royal Jelly (needs 30) in 24 hours and reverted to an egg to heal!`);
-                        return;
-                    } else {
-                        newStage = 'child';
-                        state.stageStart = Date.now();
-                        state.childNectar = 0;
-                    }
-                }
-            }
-            // 3. Child Stage
-            else if (state.stage === 'child') {
-                const childHours = (Date.now() - state.stageStart) / 3600000;
-                if (childHours >= 24 && state.childNectar < 20) {
-                    resetToEgg(`${state.name} didn't gather enough nectar (needs 20) in her first 24 hours and reverted to an egg to heal!`);
-                    return;
-                }
-                if (state.childNectar >= 60) {
-                    newStage = 'adult';
-                    state.stageStart = Date.now();
-                }
-            }
-            
-            if (state.stage !== newStage) {
-                state.stage = newStage;
-                logUI(`🎉 ${state.name} has grown into a ${newStage}!`);
+        // This while loop handles players being offline across multiple days safely!
+        while (hoursInStage >= 24 && state.stage === 'larva') {
+            if (state.dailyFeeds < 30) {
+                resetToEgg(`${state.name} didn't get 30 feeds on Day ${state.larvaDay} and reverted to an egg to heal!`);
+                return;
+            } else {
+                state.larvaDay++;
+                state.stageStart += (24 * 3600000); 
+                hoursInStage = (now - state.stageStart) / 3600000;
+                state.dailyFeeds = 0; 
+                logUI(`🎉 ${state.name} grew to Larva Day ${state.larvaDay}!`);
                 if (typeof rebuildBeeMesh === 'function') rebuildBeeMesh();
-                
-                if ((newStage === 'child' || newStage === 'adult') && !state.hiveUnlocked && state.hiveLevel === 1) {
-                    boxGroup.visible = true;
-                    logUI("📦 A mysterious delivery box has appeared in the garden!");
+            }
+        }
+        
+        // Instant morph on Day 3 if they hit the 30th feed early!
+        if (state.stage === 'larva' && state.larvaDay === 3 && state.dailyFeeds >= 30) {
+            newStage = 'child';
+            state.stageStart = now;
+            state.dailyFeeds = 0;
+            state.childDay = 1;
+        }
+    }
+    // 3. Child Stage (2 Days)
+    else if (state.stage === 'child') {
+        let hoursInStage = (now - state.stageStart) / 3600000;
+        
+        while (hoursInStage >= 24 && state.stage === 'child') {
+            if (state.dailyFeeds < 30) {
+                resetToEgg(`${state.name} didn't eat 30 flowers on Child Day ${state.childDay} and reverted to an egg!`);
+                return;
+            } else {
+                state.childDay++;
+                state.stageStart += (24 * 3600000);
+                hoursInStage = (now - state.stageStart) / 3600000;
+                state.dailyFeeds = 0;
+
+                if (state.childDay > 2) {
+                    newStage = 'adult';
+                    state.stageStart = now;
+                } else {
+                    logUI(`🎉 ${state.name} grew to Child Stage 2 size!`);
+                    if (typeof rebuildBeeMesh === 'function') rebuildBeeMesh();
                 }
             }
-            
-            if (state.stage === 'adult' || state.stage === 'child') {
-                if (state.stats.honeyJars >= 50 && state.hiveLevel === 1 && state.hiveUnlocked) {
-                    state.hiveLevel = 2; state.hiveUnlocked = false; 
-                    boxGroup.visible = true; hiveGroup.visible = false;
-                    logUI("📦 Another mysterious box appeared! What could it be?!");
-                }
-                if (state.stats.honeyJars >= 200 && state.hiveLevel === 2 && state.hiveUnlocked) {
-                    state.hiveLevel = 3; state.hiveUnlocked = false; 
-                    boxGroup.visible = true; hiveGroup.visible = false;
-                    logUI("📦 A massive mysterious box appeared over the hive!");
-                }
-                if (state.stats.honeyJars >= 500 && state.hiveLevel === 3 && state.hiveUnlocked) {
-                    state.hiveLevel = 4; state.hiveUnlocked = false; 
-                    boxGroup.visible = true; hiveGroup.visible = false;
-                    logUI("📦 An elegant, incredibly heavy box just dropped into the garden!");
-                }
-                if (state.stats.honeyJars >= 1000 && state.hiveLevel === 4 && state.hiveUnlocked) {
-                    state.hiveLevel = 5; state.hiveUnlocked = false; 
-                    boxGroup.visible = true; hiveGroup.visible = false;
-                    logUI("📦 A glowing, magical crate has arrived. This must be the ultimate upgrade!");
-                }
+        }
+    }
+
+    if (state.stage !== newStage) {
+        state.stage = newStage;
+        logUI(`🎉 ${state.name} has grown into a ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}!`);
+        if (typeof rebuildBeeMesh === 'function') rebuildBeeMesh();
+
+        if ((newStage === 'child' || newStage === 'adult') && !state.hiveUnlocked && state.hiveLevel === 1) {
+            boxGroup.visible = true;
+            logUI("📦 A mysterious delivery box has appeared in the garden!");
+        }
+    }
+
+    // Hive Upgrades based on exact GDD specs
+    if (state.stage === 'adult' || state.stage === 'child') {
+        if (state.stats.honeyJars >= 50 && state.hiveLevel === 1 && state.hiveUnlocked) {
+            state.hiveLevel = 2; state.hiveUnlocked = false;
+            boxGroup.visible = true; hiveGroup.visible = false;
+            logUI("📦 Another mysterious box appeared! What could it be?!");
+        }
+        if (state.stats.honeyJars >= 200 && state.hiveLevel === 2 && state.hiveUnlocked) {
+            state.hiveLevel = 3; state.hiveUnlocked = false;
+            boxGroup.visible = true; hiveGroup.visible = false;
+            logUI("📦 A massive mysterious box appeared over the hive!");
+        }
+        // Keeping the fun ultimate legacy boxes in just in case!
+        if (state.stats.honeyJars >= 500 && state.hiveLevel === 3 && state.hiveUnlocked) {
+            state.hiveLevel = 4; state.hiveUnlocked = false;
+            boxGroup.visible = true; hiveGroup.visible = false;
+        }
+        if (state.stats.honeyJars >= 1000 && state.hiveLevel === 4 && state.hiveUnlocked) {
+            state.hiveLevel = 5; state.hiveUnlocked = false;
+            boxGroup.visible = true; hiveGroup.visible = false;
+        }
+    }
+
+    document.getElementById('life-stage').innerText = `Stage: ${state.stage.charAt(0).toUpperCase() + state.stage.slice(1)}`;
+    document.getElementById('val-dob').innerText = new Date(state.birthDate).toLocaleDateString();
+
+    // UI Buttons Update
+    const treatBtn = document.getElementById('btn-treat');
+    const seedBtn = document.getElementById('btn-seed');
+
+    if (state.stage === 'egg') {
+        document.getElementById('wrap-egg-color').classList.remove('hidden');
+        document.getElementById('wrap-fuzz-color').classList.add('hidden');
+        treatBtn.innerText = "💧 Food (Waiting)";
+        treatBtn.classList.add('btn-locked');
+        seedBtn.classList.add('btn-locked');
+    } else {
+        document.getElementById('wrap-egg-color').classList.add('hidden');
+        document.getElementById('wrap-fuzz-color').classList.remove('hidden');
+        
+        if (state.stage === 'larva') {
+            treatBtn.innerText = "💧 Feed Royal Jelly";
+            treatBtn.classList.remove('btn-locked');
+            seedBtn.classList.add('btn-locked');
+        } else if (state.stage === 'child') {
+            treatBtn.innerText = "🌸 Drop Flower";
+            treatBtn.classList.remove('btn-locked');
+            seedBtn.classList.remove('btn-locked');
+        } else if (state.stage === 'adult') {
+            treatBtn.innerText = "⚡ Sugar Water";
+            treatBtn.classList.remove('btn-locked');
+            seedBtn.classList.remove('btn-locked');
+        }
+    }
+
+    if (state.stage === 'adult') {
+        const expectedChildren = Math.min(10, Math.floor(state.stats.honeyJars / 1000));
+        if (expectedChildren > state.children) {
+            state.children = expectedChildren;
+            logUI(`🥚 Incredible! ${state.name} laid a new baby egg! (${state.children}/10)`);
+            if (typeof updateChildrenMeshes === 'function') updateChildrenMeshes();
+        }
+    }
+}
+
+function applyLoadedData(data) {
+    state.name = data.name || state.name;
+    state.birthDate = data.birthDate || state.birthDate;
+    state.totalFood = data.totalFood || state.totalFood;
+    state.totalNectarGathered = data.totalNectarGathered || 0;
+    state.stage = data.stage || 'egg';
+    state.hiveUnlocked = data.hiveUnlocked || state.hiveUnlocked;
+    state.hiveLevel = data.hiveLevel || state.hiveLevel;
+    state.children = data.children || state.children;
+    state.stats = data.stats || state.stats;
+    if (state.stats.health === undefined) state.stats.health = 100;
+    state.hourly = data.hourly || { timestamp: Date.now(), count: 0 };
+    state.stageStart = data.stageStart || Date.now();
+    
+    // Applying the new proper GDD counters
+    state.larvaDay = data.larvaDay || 1;
+    state.childDay = data.childDay || 1;
+    state.dailyFeeds = data.dailyFeeds || 0;
+
+    state.color = data.color || state.color;
+    state.eggColor = data.eggColor || '#ffd700';
+    state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
+    state.seeds = data.seeds || [];
+
+    if (data.lastSaved && state.stage !== 'egg') {
+        const msOffline = Date.now() - new Date(data.lastSaved).getTime();
+        const hoursOffline = msOffline / (1000 * 60 * 60);
+
+        if (hoursOffline > 0.1) {
+            const offlineHungerDrain = 1.5;
+            const offlineHealthDrain = 0.5;
+
+            const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
+            const hoursUntilStarving = startingHunger / offlineHungerDrain;
+
+            if (hoursOffline > hoursUntilStarving) {
+                state.stats.hunger = 0;
+                const starvingHours = hoursOffline - hoursUntilStarving;
+                state.stats.health -= (starvingHours * offlineHealthDrain);
+            } else {
+                state.stats.hunger -= (hoursOffline * offlineHungerDrain);
             }
 
-            document.getElementById('life-stage').innerText = `Stage: ${state.stage.charAt(0).toUpperCase() + state.stage.slice(1)}`;
-            document.getElementById('val-dob').innerText = new Date(state.birthDate).toLocaleDateString();
-            
-            const treatBtn = document.getElementById('btn-treat');
-            const seedBtn = document.getElementById('btn-seed');
-            
-            if (state.stage === 'egg') {
-                document.getElementById('wrap-egg-color').classList.remove('hidden');
-                document.getElementById('wrap-fuzz-color').classList.add('hidden');
-                treatBtn.innerText = "💧 Food (Waiting)"; 
-                treatBtn.classList.add('btn-locked');
-                seedBtn.classList.add('btn-locked');
+            state.stats.energy = 100;
+
+            if (state.stats.health <= 0) {
+                resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
             } else {
-                document.getElementById('wrap-egg-color').classList.add('hidden');
-                document.getElementById('wrap-fuzz-color').classList.remove('hidden');
-                if (state.stage === 'larva') { 
-                    treatBtn.innerText = "💧 Feed Royal Jelly"; 
-                    treatBtn.classList.remove('btn-locked');
-                    seedBtn.classList.add('btn-locked');
-                } else if (state.stage === 'child' || state.stage === 'adult') { 
-                    treatBtn.innerText = "💧 Sugar Water"; 
-                    treatBtn.classList.remove('btn-locked');
-                    seedBtn.classList.remove('btn-locked');
-                }
-            }
-            
-            if (state.stage === 'adult') {
-                const expectedChildren = Math.min(10, Math.floor(state.stats.honeyJars / 1000));
-                if (expectedChildren > state.children) {
-                    state.children = expectedChildren;
-                    logUI(`🥚 Incredible! ${state.name} laid a new baby egg! (${state.children}/10)`);
-                    if (typeof updateChildrenMeshes === 'function') updateChildrenMeshes();
-                }
+                logUI(`Welcome back! ${state.name} rested peacefully and is getting hungry.`);
             }
         }
-        
-        function applyLoadedData(data) {
-            state.name = data.name || state.name;
-            state.birthDate = data.birthDate || state.birthDate;
-            state.totalFood = data.totalFood || state.totalFood;
-            state.totalNectarGathered = data.totalNectarGathered || 0;
-            state.stage = data.stage || 'egg'; 
-            state.hiveUnlocked = data.hiveUnlocked || state.hiveUnlocked;
-            state.hiveLevel = data.hiveLevel || state.hiveLevel;
-            state.children = data.children || state.children;
-            state.stats = data.stats || state.stats;
-            if (state.stats.health === undefined) state.stats.health = 100;
-            state.hourly = data.hourly || { timestamp: Date.now(), count: 0 };
-            state.stageStart = data.stageStart || Date.now();
-            state.larvaFood = data.larvaFood || 0;
-            state.childNectar = data.childNectar || 0;
-            
-            state.color = data.color || state.color;
-            state.eggColor = data.eggColor || '#ffd700';
-            state.friendsUnlocked = data.friendsUnlocked || state.friendsUnlocked;
-            state.seeds = data.seeds || [];
-            
-            if (data.lastSaved && state.stage !== 'egg') {
-                const msOffline = Date.now() - new Date(data.lastSaved).getTime();
-                const hoursOffline = msOffline / (1000 * 60 * 60);
-                
-                if (hoursOffline > 0.1) {
-                    // SECURE OFFLINE MATH: Hunger drains a very slow 1.5 per hour offline. 
-                    // This means a fully fed larva survives over 2.5 days (66 hours) offline!
-                    const offlineHungerDrain = 1.5; 
-                    const offlineHealthDrain = 0.5; // Health drains even slower if starving offline
-                    
-                    const startingHunger = data.stats && data.stats.hunger !== undefined ? data.stats.hunger : 100;
-                    const hoursUntilStarving = startingHunger / offlineHungerDrain;
-                    
-                    if (hoursOffline > hoursUntilStarving) {
-                        state.stats.hunger = 0;
-                        const starvingHours = hoursOffline - hoursUntilStarving;
-                        state.stats.health -= (starvingHours * offlineHealthDrain); 
-                    } else {
-                        state.stats.hunger -= (hoursOffline * offlineHungerDrain); 
-                    }
-                    
-                    state.stats.energy = 100; 
-                    
-                    if (state.stats.health <= 0) {
-                        resetToEgg(`${state.name} fainted from hunger while you were away and reverted into an egg to heal!`);
-                    } else {
-                        logUI(`Welcome back! ${state.name} rested peacefully and is getting hungry.`);
-                    }
-                }
+    }
+
+    document.getElementById('inp-color').value = state.color;
+    document.getElementById('sel-egg-color').value = state.eggColor;
+    document.getElementById('sel-accessory').value = data.accessory || 'none';
+    document.getElementById('inp-bee-name').value = state.name;
+
+    if (!isSceneReady) return;
+
+    rebuildBeeMesh();
+    calculateStage();
+    if (typeof applyBeeCustomization === 'function') applyBeeCustomization();
+    if (typeof buildHive === 'function') buildHive();
+    updateStatsUI();
+    checkFriends();
+
+    hiveGroup.visible = state.hiveUnlocked;
+    boxGroup.visible = (!state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child'));
+    logUI(`${state.name}'s memories loaded successfully! 🌻`);
+}
+
+// Brand new save key to make sure we don't accidentally load old broken quotas!
+const SAVE_KEY = 'save_v22';
+
+if (firebaseConfig) {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+        else await signInAnonymously(auth);
+    };
+    initAuth().then(() => {
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('sync-status').innerText = "☁️ Cloud Sync Active";
+                document.getElementById('sync-status').className = "text-xs font-semibold text-emerald-600";
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'honey_data', SAVE_KEY);
+                try { const snap = await getDoc(docRef); if (snap.exists()) applyLoadedData(snap.data()); } catch(e) {}
             }
-            
-            document.getElementById('inp-color').value = state.color;
-            document.getElementById('sel-egg-color').value = state.eggColor;
-            document.getElementById('sel-accessory').value = data.accessory || 'none';
-            document.getElementById('inp-bee-name').value = state.name;
-            
-            if (!isSceneReady) return; 
-            
-            rebuildBeeMesh();
-            calculateStage();
-            if (typeof applyBeeCustomization === 'function') applyBeeCustomization();
-            if (typeof buildHive === 'function') buildHive(); 
-            updateStatsUI();
-            checkFriends();
-            
-            hiveGroup.visible = state.hiveUnlocked;
-            boxGroup.visible = (!state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child'));
-            logUI(`${state.name}'s memories loaded successfully! 🌻`);
-        }
-        
-        // Using v21 to ensure a clean slate and wipe out the broken starvation math!
-        const SAVE_KEY = 'save_v21'; 
-        
-        if (firebaseConfig) {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-            };
-            initAuth().then(() => {
-                onAuthStateChanged(auth, async (user) => {
-                    currentUser = user;
-                    if (user) {
-                        document.getElementById('sync-status').innerText = "☁️ Cloud Sync Active";
-                        document.getElementById('sync-status').className = "text-xs font-semibold text-emerald-600";
-                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'honey_data', SAVE_KEY);
-                        try { const snap = await getDoc(docRef); if (snap.exists()) applyLoadedData(snap.data()); } catch(e) {}
-                    }
-                });
-            });
+        });
+    });
+} else {
+    document.getElementById('sync-status').innerText = "💾 Local Save Active";
+    document.getElementById('sync-status').className = "text-xs font-semibold text-blue-600";
+    try {
+        const localData = localStorage.getItem(`honey_data_${SAVE_KEY}`);
+        if (localData) applyLoadedData(JSON.parse(localData));
+    } catch(e) { console.error("Local storage error"); }
+}
+
+setInterval(() => {
+    calculateStage();
+    const dataToSave = {
+        name: state.name, birthDate: state.birthDate, totalFood: state.totalFood, totalNectarGathered: state.totalNectarGathered, stage: state.stage,
+        stageStart: state.stageStart, larvaDay: state.larvaDay, childDay: state.childDay, dailyFeeds: state.dailyFeeds,
+        hiveUnlocked: state.hiveUnlocked, hiveLevel: state.hiveLevel, children: state.children, hourly: state.hourly,
+        stats: state.stats, color: state.color, eggColor: state.eggColor, accessory: document.getElementById('sel-accessory').value,
+        friendsUnlocked: state.friendsUnlocked, seeds: state.seeds, lastSaved: new Date().toISOString()
+    };
+    if (db && currentUser) {
+        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'honey_data', SAVE_KEY);
+        setDoc(docRef, dataToSave, { merge: true }).catch(e => {});
+    } else if (!firebaseConfig) {
+        try { localStorage.setItem(`honey_data_${SAVE_KEY}`, JSON.stringify(dataToSave)); } catch(e){}
+    }
+}, 5000);
+
+document.getElementById('btn-reset').addEventListener('click', async () => {
+    resetToEgg();
+    document.getElementById('inp-color').value = state.color;
+    document.getElementById('sel-egg-color').value = state.eggColor;
+    document.getElementById('sel-accessory').value = 'none';
+    document.getElementById('inp-bee-name').value = state.name;
+    if (db && currentUser) {
+        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'honey_data', SAVE_KEY);
+        await deleteDoc(docRef);
+    } else if (!firebaseConfig) {
+        localStorage.removeItem(`honey_data_${SAVE_KEY}`);
+    }
+    rebuildBeeMesh(); buildHive(); applyBeeCustomization(); calculateStage(); updateStatsUI(); checkFriends();
+    hiveGroup.visible = false; boxGroup.visible = false;
+    logUI("All game data wiped. A new egg has been laid!");
+});
+
+let audioCtx, oscillator, filter, gainNode;
+function initAudio() {
+    if (audioCtx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    oscillator = audioCtx.createOscillator();
+    oscillator.type = 'sawtooth'; oscillator.frequency.value = 75;
+    filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 350;
+    gainNode = audioCtx.createGain(); gainNode.gain.value = 0;
+    oscillator.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
+    oscillator.start();
+}
+function updateAudioBuzz(speed) {
+    if (!state.audioEnabled || !audioCtx || (state.stage !== 'adult' && state.stage !== 'child')) return;
+    if (state.isSleeping) {
+        gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+        return;
+    }
+    const targetFreq = 75 + (speed * 100);
+    const targetVol = 0.03 + (speed * 0.08);
+    oscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+    gainNode.gain.setTargetAtTime(Math.min(targetVol, 0.15), audioCtx.currentTime, 0.1);
+}
+document.getElementById('toggle-audio').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    if (!audioCtx) initAudio();
+    state.audioEnabled = !state.audioEnabled;
+    if (state.audioEnabled) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        btn.innerHTML = '🔊'; btn.classList.add('bg-amber-100'); btn.classList.remove('bg-white/50');
+    } else {
+        gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        btn.innerHTML = '🔇'; btn.classList.remove('bg-amber-100'); btn.classList.add('bg-white/50');
+    }
+});
+
+const logContainer = document.getElementById('log-container');
+function logUI(message) {
+    const el = document.createElement('div');
+    el.className = 'py-1 border-b border-black/5 last:border-0';
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    el.innerHTML = `<span class="opacity-50 mr-1 font-mono">[${time}]</span> ${message}`;
+    logContainer.appendChild(el);
+    if(logContainer.children.length > 30) logContainer.removeChild(logContainer.firstChild);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function updateEggTimer() {
+    const eggTimerEl = document.getElementById('egg-timer');
+    if (state.stage === 'egg') {
+        const hatchTime = state.birthDate + (60 * 60 * 1000);
+        const timeLeft = hatchTime - Date.now();
+        if (timeLeft > 0) {
+            eggTimerEl.classList.remove('hidden');
+            const m = Math.floor(timeLeft / 60000);
+            const s = Math.floor((timeLeft % 60000) / 1000);
+            eggTimerEl.innerText = `🥚 Hatches in: ${m}m ${s}s`;
         } else {
-            document.getElementById('sync-status').innerText = "💾 Local Save Active";
-            document.getElementById('sync-status').className = "text-xs font-semibold text-blue-600";
-            try {
-                const localData = localStorage.getItem(`honey_data_${SAVE_KEY}`);
-                if (localData) applyLoadedData(JSON.parse(localData));
-            } catch(e) { console.error("Local storage error"); }
+            eggTimerEl.innerText = `🥚 Hatching soon...`;
         }
-        
-        setInterval(() => {
-            calculateStage(); 
-            const dataToSave = { 
-                name: state.name, birthDate: state.birthDate, totalFood: state.totalFood, totalNectarGathered: state.totalNectarGathered, stage: state.stage, 
-                stageStart: state.stageStart, larvaFood: state.larvaFood, childNectar: state.childNectar,
-                hiveUnlocked: state.hiveUnlocked, hiveLevel: state.hiveLevel, children: state.children, hourly: state.hourly,
-                stats: state.stats, color: state.color, eggColor: state.eggColor, accessory: document.getElementById('sel-accessory').value, 
-                friendsUnlocked: state.friendsUnlocked, seeds: state.seeds, lastSaved: new Date().toISOString() 
-            };
-            if (db && currentUser) {
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'honey_data', SAVE_KEY);
-                setDoc(docRef, dataToSave, { merge: true }).catch(e => {});
-            } else if (!firebaseConfig) {
-                try { localStorage.setItem(`honey_data_${SAVE_KEY}`, JSON.stringify(dataToSave)); } catch(e){}
-            }
-        }, 5000);
-        
-        document.getElementById('btn-reset').addEventListener('click', async () => {
-            resetToEgg();
-            document.getElementById('inp-color').value = state.color;
-            document.getElementById('sel-egg-color').value = state.eggColor;
-            document.getElementById('sel-accessory').value = 'none';
-            document.getElementById('inp-bee-name').value = state.name;
-            if (db && currentUser) {
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'honey_data', SAVE_KEY);
-                await deleteDoc(docRef);
-            } else if (!firebaseConfig) {
-                localStorage.removeItem(`honey_data_${SAVE_KEY}`);
-            }
-            rebuildBeeMesh(); buildHive(); applyBeeCustomization(); calculateStage(); updateStatsUI(); checkFriends();
-            hiveGroup.visible = false; boxGroup.visible = false;
-            logUI("All game data wiped. A new egg has been laid!");
-        });
+    } else {
+        eggTimerEl.classList.add('hidden');
+    }
+}
+setInterval(updateEggTimer, 1000);
 
-        let audioCtx, oscillator, filter, gainNode;
-        function initAudio() {
-            if (audioCtx) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            oscillator = audioCtx.createOscillator();
-            oscillator.type = 'sawtooth'; oscillator.frequency.value = 75;
-            filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass'; filter.frequency.value = 350; 
-            gainNode = audioCtx.createGain(); gainNode.gain.value = 0; 
-            oscillator.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
-            oscillator.start();
-        }
-        function updateAudioBuzz(speed) {
-            if (!state.audioEnabled || !audioCtx || (state.stage !== 'adult' && state.stage !== 'child')) return; 
-            if (state.isSleeping) {
-                gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-                return;
-            }
-            const targetFreq = 75 + (speed * 100);
-            const targetVol = 0.03 + (speed * 0.08);
-            oscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
-            gainNode.gain.setTargetAtTime(Math.min(targetVol, 0.15), audioCtx.currentTime, 0.1);
-        }
-        document.getElementById('toggle-audio').addEventListener('click', (e) => {
-            const btn = e.currentTarget;
-            if (!audioCtx) initAudio();
-            state.audioEnabled = !state.audioEnabled;
-            if (state.audioEnabled) {
-                if(audioCtx.state === 'suspended') audioCtx.resume();
-                btn.innerHTML = '🔊'; btn.classList.add('bg-amber-100'); btn.classList.remove('bg-white/50');
-            } else {
-                gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-                btn.innerHTML = '🔇'; btn.classList.remove('bg-amber-100'); btn.classList.add('bg-white/50');
-            }
-        });
-        
-        // FIXED DIARY ENGINE: Messages append to the bottom, and the box automatically scrolls down!
-        const logContainer = document.getElementById('log-container');
-        function logUI(message) {
-            const el = document.createElement('div');
-            el.className = 'py-1 border-b border-black/5 last:border-0';
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            el.innerHTML = `<span class="opacity-50 mr-1 font-mono">[${time}]</span> ${message}`;
-            logContainer.appendChild(el);
-            
-            // Increased memory so Harmonie can read up to 30 past events!
-            if(logContainer.children.length > 30) logContainer.removeChild(logContainer.firstChild);
-            
-            // Auto-scroll to the bottom seamlessly
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-        
-        function updateEggTimer() {
-            const eggTimerEl = document.getElementById('egg-timer');
-            if (state.stage === 'egg') {
-                const hatchTime = state.birthDate + (60 * 60 * 1000); 
-                const timeLeft = hatchTime - Date.now();
-                if (timeLeft > 0) {
-                    eggTimerEl.classList.remove('hidden');
-                    const m = Math.floor(timeLeft / 60000);
-                    const s = Math.floor((timeLeft % 60000) / 1000);
-                    eggTimerEl.innerText = `🥚 Hatches in: ${m}m ${s}s`;
-                } else {
-                    eggTimerEl.innerText = `🥚 Hatching soon...`;
-                }
-            } else {
-                eggTimerEl.classList.add('hidden');
-            }
-        }
-        setInterval(updateEggTimer, 1000);
-        
-        const bars = { health: document.getElementById('bar-health'), energy: document.getElementById('bar-energy'), hunger: document.getElementById('bar-hunger'), happiness: document.getElementById('bar-happiness'), tiredness: document.getElementById('bar-tiredness') };
-        const vals = { health: document.getElementById('val-health'), energy: document.getElementById('val-energy'), hunger: document.getElementById('val-hunger'), happiness: document.getElementById('val-happiness'), tiredness: document.getElementById('val-tiredness'), nectar: document.getElementById('val-nectar'), honey: document.getElementById('val-honey') };
-        
-        function updateStatsUI() {
-            state.stats.nectar = state.stats.nectar || 0;
-            state.stats.honeyJars = state.stats.honeyJars || 0;
-            state.stats.health = state.stats.health || 100;
-            
-            ['health', 'energy', 'hunger', 'happiness'].forEach(stat => {
-                state.stats[stat] = Math.max(0, Math.min(100, state.stats[stat]));
-                bars[stat].style.width = state.stats[stat] + '%';
-                vals[stat].innerText = Math.round(state.stats[stat]) + '%';
-                if(state.stats[stat] < 25) bars[stat].style.backgroundColor = '#ef4444'; 
-                else if(state.stats[stat] < 50) bars[stat].style.backgroundColor = '#f59e0b'; 
-                else {
-                    if(stat==='health') bars[stat].style.backgroundColor = '#ef4444';
-                    if(stat==='energy') bars[stat].style.backgroundColor = '#fbbf24';
-                    if(stat==='hunger') bars[stat].style.backgroundColor = '#4ade80';
-                    if(stat==='happiness') bars[stat].style.backgroundColor = '#f472b6';
-                }
-            });
-            state.stats.tiredness = Math.max(0, Math.min(100, state.stats.tiredness));
-            bars.tiredness.style.width = state.stats.tiredness + '%';
-            vals.tiredness.innerText = Math.round(state.stats.tiredness) + '%';
-            bars.tiredness.style.backgroundColor = state.stats.tiredness > 75 ? '#ef4444' : '#60a5fa';
-            
-            vals.nectar.innerText = `${Math.floor(state.stats.nectar)} drops`;
-            vals.honey.innerText = `${state.stats.honeyJars.toFixed(2)} 🍯`; 
-        }
-        function spawnFloatingEmoji(emoji, position3D, sizeStr = '28px') {
-            const pos = position3D.clone();
-            pos.project(camera);
-            const x = (pos.x * .5 + .5) * window.innerWidth;
-            const y = (pos.y * -.5 + .5) * window.innerHeight;
-            
-            const driftX = (Math.random() - 0.5) * 40;
-            const el = document.createElement('div');
-            el.className = 'floating-emoji';
-            el.innerText = emoji;
-            el.style.left = `${x + driftX}px`;
-            el.style.top = `${y}px`;
-            el.style.fontSize = sizeStr;
-            el.style.transform += ` rotate(${(Math.random() - 0.5) * 30}deg)`;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
-        }
+const bars = { health: document.getElementById('bar-health'), energy: document.getElementById('bar-energy'), hunger: document.getElementById('bar-hunger'), happiness: document.getElementById('bar-happiness'), tiredness: document.getElementById('bar-tiredness') };
+const vals = { health: document.getElementById('val-health'), energy: document.getElementById('val-energy'), hunger: document.getElementById('val-hunger'), happiness: document.getElementById('val-happiness'), tiredness: document.getElementById('val-tiredness'), nectar: document.getElementById('val-nectar'), honey: document.getElementById('val-honey') };
 
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0xecfdf5, 0.015);
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 25, 35);
-        camera.lookAt(0, 0, 0);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xfff5b6, 1.2); 
-        dirLight.position.set(15, 30, 15);
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.left = -30; dirLight.shadow.camera.right = 30;
-        dirLight.shadow.camera.top = 30; dirLight.shadow.camera.bottom = -30;
-        dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
-        scene.add(dirLight);
-        
-        let isNightTime = false;
-        let isRaining = false;
-        let rainParticles = [];
-        
-        function updateEnvironment() {
-            const hour = new Date().getHours();
-            const isDay = hour >= 6 && hour < 19; 
-            isNightTime = !isDay;
-            if (Math.random() < 0.1) isRaining = !isRaining;
-            
-            const bodyClass = document.getElementById('main-body').classList;
-            if (isRaining) {
-                bodyClass.add('raining'); bodyClass.remove('night-mode');
-                scene.fog.color.setHex(0x94a3b8); dirLight.color.setHex(0xe2e8f0);
-                dirLight.intensity = 0.5; ambientLight.intensity = 0.6;
-                if(!state.isSleeping && (state.stage === 'adult' || state.stage === 'child')) logUI(`🌧️ It started raining! ${state.name} is heading home.`);
-            } else if (isDay) {
-                bodyClass.remove('night-mode', 'raining');
-                document.getElementById('main-body').style.background = 'linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%)';
-                scene.fog.color.setHex(0xecfdf5); dirLight.color.setHex(0xfff5b6);
-                dirLight.intensity = 1.2; ambientLight.intensity = 0.9;
-            } else {
-                bodyClass.add('night-mode'); bodyClass.remove('raining');
-                scene.fog.color.setHex(0x0f172a); dirLight.color.setHex(0xa5b4fc); 
-                dirLight.intensity = 0.4; ambientLight.intensity = 0.4;
-            }
+function updateStatsUI() {
+    state.stats.nectar = state.stats.nectar || 0;
+    state.stats.honeyJars = state.stats.honeyJars || 0;
+    state.stats.health = state.stats.health || 100;
+
+    ['health', 'energy', 'hunger', 'happiness'].forEach(stat => {
+        state.stats[stat] = Math.max(0, Math.min(100, state.stats[stat]));
+        bars[stat].style.width = state.stats[stat] + '%';
+        vals[stat].innerText = Math.round(state.stats[stat]) + '%';
+        if(state.stats[stat] < 25) bars[stat].style.backgroundColor = '#ef4444';
+        else if(state.stats[stat] < 50) bars[stat].style.backgroundColor = '#f59e0b';
+        else {
+            if(stat==='health') bars[stat].style.backgroundColor = '#ef4444';
+            if(stat==='energy') bars[stat].style.backgroundColor = '#fbbf24';
+            if(stat==='hunger') bars[stat].style.backgroundColor = '#4ade80';
+            if(stat==='happiness') bars[stat].style.backgroundColor = '#f472b6';
         }
-        updateEnvironment();
-        setInterval(updateEnvironment, 60000); 
-        
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.12 }));
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
+    });
+    state.stats.tiredness = Math.max(0, Math.min(100, state.stats.tiredness));
+    bars.tiredness.style.width = state.stats.tiredness + '%';
+    vals.tiredness.innerText = Math.round(state.stats.tiredness) + '%';
+    bars.tiredness.style.backgroundColor = state.stats.tiredness > 75 ? '#ef4444' : '#60a5fa';
 
-        const treesGroup = new THREE.Group();
-        scene.add(treesGroup);
-        const treeMeshes = [];
-        const treePositions = [ {x: 40, z: -40}, {x: -35, z: -50}, {x: -45, z: 20}, {x: 50, z: 30}, {x: 15, z: -60} ];
-        
-        treePositions.forEach(pos => {
-            const tree = new THREE.Group();
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.5, 5, 8), new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 0.9}));
-            trunk.position.y = 2.5; trunk.castShadow = true; tree.add(trunk);
-            const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(5, 2), new THREE.MeshStandardMaterial({color: 0x22c55e, roughness: 0.9}));
-            leaves.position.y = 7; leaves.castShadow = true; tree.add(leaves);
-            tree.position.set(pos.x, 0, pos.z);
-            tree.scale.set(0.5, 0.5, 0.5); 
-            treesGroup.add(tree);
-            treeMeshes.push(tree);
-        });
+    vals.nectar.innerText = `${Math.floor(state.stats.nectar)} drops`;
+    vals.honey.innerText = `${state.stats.honeyJars.toFixed(2)} 🍯`;
+}
+function spawnFloatingEmoji(emoji, position3D, sizeStr = '28px') {
+    const pos = position3D.clone();
+    pos.project(camera);
+    const x = (pos.x * .5 + .5) * window.innerWidth;
+    const y = (pos.y * -.5 + .5) * window.innerHeight;
 
-        const hiveGroup = new THREE.Group();
-        scene.add(hiveGroup);
+    const driftX = (Math.random() - 0.5) * 40;
+    const el = document.createElement('div');
+    el.className = 'floating-emoji';
+    el.innerText = emoji;
+    el.style.left = `${x + driftX}px`;
+    el.style.top = `${y}px`;
+    el.style.fontSize = sizeStr;
+    el.style.transform += ` rotate(${(Math.random() - 0.5) * 30}deg)`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
 
-        function buildHive() {
-            while(hiveGroup.children.length > 0) { hiveGroup.remove(hiveGroup.children[0]); }
-            
-            const hiveMat = new THREE.MeshStandardMaterial({color: 0xdaa520, roughness: 0.9}); 
-            const goldMat = new THREE.MeshStandardMaterial({color: 0xfbbf24, metalness: 0.8, roughness: 0.2});
-            
-            const pad = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 3), new THREE.MeshStandardMaterial({color: 0x8b4513}));
-            pad.position.set(0, 0.1, 4.5); pad.receiveShadow = true; hiveGroup.add(pad);
-            const door = new THREE.Mesh(new THREE.CircleGeometry(1.2, 32), new THREE.MeshBasicMaterial({color: 0x111111}));
-            door.position.set(0, 1.5, 3.8); hiveGroup.add(door);
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0xecfdf5, 0.015);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 25, 35);
+camera.lookAt(0, 0, 0);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+scene.add(ambientLight);
+const dirLight = new THREE.DirectionalLight(0xfff5b6, 1.2);
+dirLight.position.set(15, 30, 15);
+dirLight.castShadow = true;
+dirLight.shadow.camera.left = -30; dirLight.shadow.camera.right = 30;
+dirLight.shadow.camera.top = 30; dirLight.shadow.camera.bottom = -30;
+dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
+scene.add(dirLight);
 
-            if (state.hiveLevel === 1) { 
-                for(let i=0; i<6; i++) {
-                    const radius = 4 - (i * 0.6);
-                    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.8, 16, 32), hiveMat);
-                    ring.position.y = i * 1.2 + 0.8; ring.rotation.x = Math.PI / 2;
-                    ring.castShadow = true; ring.receiveShadow = true; hiveGroup.add(ring);
-                }
-            } else if (state.hiveLevel === 2) { 
-                for(let i=0; i<5; i++) {
-                    const radius = 4.2 - (i * 0.5);
-                    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.9, 16, 32), hiveMat);
-                    ring.position.y = i * 1.3 + 0.9; ring.rotation.x = Math.PI / 2;
-                    ring.castShadow = true; ring.receiveShadow = true; hiveGroup.add(ring);
-                }
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(3.5, 3, 16), new THREE.MeshStandardMaterial({color: 0x8b4513, roughness: 0.9}));
-                roof.position.y = 7.5; roof.castShadow = true; hiveGroup.add(roof);
-            } else if (state.hiveLevel === 3) { 
-                const whiteMat = new THREE.MeshStandardMaterial({color: 0xf1f5f9, roughness: 0.8});
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 4, 32), whiteMat);
-                base.position.y = 2; base.castShadow = true; hiveGroup.add(base);
-                const mid = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 4.5, 3, 32), hiveMat);
-                mid.position.y = 5.5; mid.castShadow = true; hiveGroup.add(mid);
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(4.2, 4, 16), new THREE.MeshStandardMaterial({color: 0x4a0404, roughness: 0.9}));
-                roof.position.y = 9.0; roof.castShadow = true; hiveGroup.add(roof);
-            } else if (state.hiveLevel === 4) { 
-                const purpMat = new THREE.MeshStandardMaterial({color: 0x6b21a8, roughness: 0.7});
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 5, 6), purpMat);
-                base.position.y = 2.5; base.castShadow = true; hiveGroup.add(base);
-                const mid = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 4.5, 4, 6), goldMat);
-                mid.position.y = 7; mid.castShadow = true; hiveGroup.add(mid);
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(4.0, 4, 6), purpMat);
-                roof.position.y = 11; roof.castShadow = true; hiveGroup.add(roof);
-            } else { 
-                door.visible = false; pad.visible = false;
-                const glassMat = new THREE.MeshPhysicalMaterial({color: 0x38bdf8, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.1});
-                const coreMat = new THREE.MeshStandardMaterial({color: 0xffea00, emissive: 0xffaa00});
-                const core = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), coreMat);
-                core.position.y = 6; hiveGroup.add(core);
-                const shell = new THREE.Mesh(new THREE.DodecahedronGeometry(4.5, 0), glassMat);
-                shell.position.y = 6; hiveGroup.add(shell);
-                for(let i=0; i<3; i++) {
-                    const ring = new THREE.Mesh(new THREE.TorusGeometry(6.5 - i, 0.2, 8, 32), goldMat);
-                    ring.position.y = 4 + i*2; ring.rotation.x = Math.PI / 2;
-                    hiveGroup.add(ring);
-                }
-            }
+let isNightTime = false;
+let isRaining = false;
+let rainParticles = [];
+
+function updateEnvironment() {
+    const hour = new Date().getHours();
+    const isDay = hour >= 6 && hour < 19;
+    isNightTime = !isDay;
+    if (Math.random() < 0.1) isRaining = !isRaining;
+
+    const bodyClass = document.getElementById('main-body').classList;
+    if (isRaining) {
+        bodyClass.add('raining'); bodyClass.remove('night-mode');
+        scene.fog.color.setHex(0x94a3b8); dirLight.color.setHex(0xe2e8f0);
+        dirLight.intensity = 0.5; ambientLight.intensity = 0.6;
+        if(!state.isSleeping && (state.stage === 'adult' || state.stage === 'child')) logUI(`🌧️ It started raining! ${state.name} is heading home.`);
+    } else if (isDay) {
+        bodyClass.remove('night-mode', 'raining');
+        document.getElementById('main-body').style.background = 'linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%)';
+        scene.fog.color.setHex(0xecfdf5); dirLight.color.setHex(0xfff5b6);
+        dirLight.intensity = 1.2; ambientLight.intensity = 0.9;
+    } else {
+        bodyClass.add('night-mode'); bodyClass.remove('raining');
+        scene.fog.color.setHex(0x0f172a); dirLight.color.setHex(0xa5b4fc);
+        dirLight.intensity = 0.4; ambientLight.intensity = 0.4;
+    }
+}
+updateEnvironment();
+setInterval(updateEnvironment, 60000);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.12 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const treesGroup = new THREE.Group();
+scene.add(treesGroup);
+const treeMeshes = [];
+const treePositions = [ {x: 40, z: -40}, {x: -35, z: -50}, {x: -45, z: 20}, {x: 50, z: 30}, {x: 15, z: -60} ];
+
+treePositions.forEach(pos => {
+    const tree = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.5, 5, 8), new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 0.9}));
+    trunk.position.y = 2.5; trunk.castShadow = true; tree.add(trunk);
+    const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(5, 2), new THREE.MeshStandardMaterial({color: 0x22c55e, roughness: 0.9}));
+    leaves.position.y = 7; leaves.castShadow = true; tree.add(leaves);
+    tree.position.set(pos.x, 0, pos.z);
+    tree.scale.set(0.5, 0.5, 0.5);
+    treesGroup.add(tree);
+    treeMeshes.push(tree);
+});
+
+const hiveGroup = new THREE.Group();
+scene.add(hiveGroup);
+
+function buildHive() {
+    while(hiveGroup.children.length > 0) { hiveGroup.remove(hiveGroup.children[0]); }
+    const hiveMat = new THREE.MeshStandardMaterial({color: 0xdaa520, roughness: 0.9});
+    const goldMat = new THREE.MeshStandardMaterial({color: 0xfbbf24, metalness: 0.8, roughness: 0.2});
+
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 3), new THREE.MeshStandardMaterial({color: 0x8b4513}));
+    pad.position.set(0, 0.1, 4.5); pad.receiveShadow = true; hiveGroup.add(pad);
+    const door = new THREE.Mesh(new THREE.CircleGeometry(1.2, 32), new THREE.MeshBasicMaterial({color: 0x111111}));
+    door.position.set(0, 1.5, 3.8); hiveGroup.add(door);
+
+    if (state.hiveLevel === 1) {
+        for(let i=0; i<6; i++) {
+            const radius = 4 - (i * 0.6);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.8, 16, 32), hiveMat);
+            ring.position.y = i * 1.2 + 0.8; ring.rotation.x = Math.PI / 2;
+            ring.castShadow = true; ring.receiveShadow = true; hiveGroup.add(ring);
         }
-        
-        hiveGroup.position.set(0, 0, -20);
-        const hiveDoorTarget = new THREE.Vector3(0, 2, -18);
-        const hiveHitBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0, depthWrite: false });
-        const hiveHitBox = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 15, 16), hiveHitBoxMat);
-        hiveHitBox.position.copy(hiveGroup.position); hiveHitBox.position.y += 4;
-        scene.add(hiveHitBox);
-
-        const boxGroup = new THREE.Group();
-        const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 7), new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 0.9}));
-        boxMesh.position.set(0, 3.5, -20); boxMesh.castShadow = true; boxGroup.add(boxMesh);
-        scene.add(boxGroup);
-        const boxHitBoxMat = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0, depthWrite: false });
-        const boxHitBox = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), boxHitBoxMat);
-        boxHitBox.position.copy(boxMesh.position);
-        scene.add(boxHitBox);
-        
-        hiveGroup.visible = state.hiveUnlocked;
-        boxGroup.visible = (!state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child'));
-
-        const beeMaster = new THREE.Group();
-        scene.add(beeMaster);
-        let beeGroup = new THREE.Group(); 
-        beeMaster.add(beeGroup);
-        
-        let wingPivots = []; let legs = []; let pollenBaskets = [];
-        let currentAccessoryMesh = null; const accessories = new THREE.Group();
-        const childBees = []; 
-        
-        function createNoiseTexture(colorHex, intensity=0.1) {
-            const cvs = document.createElement('canvas'); cvs.width = 128; cvs.height = 128;
-            const ctx = cvs.getContext('2d');
-            ctx.fillStyle = colorHex; ctx.fillRect(0,0,128,128);
-            for(let i=0; i<800; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? `rgba(0,0,0,${intensity})` : `rgba(255,255,255,${intensity})`;
-                ctx.fillRect(Math.random()*128, Math.random()*128, 2, 2);
-            }
-            const tex = new THREE.CanvasTexture(cvs); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
-        }
-        
-        const fuzzTex = createNoiseTexture('#B87333', 0.15); 
-        const fuzzMat = new THREE.MeshStandardMaterial({ map: fuzzTex, bumpMap: fuzzTex, bumpScale: 0.08, roughness: 1.0 });
-        const headMat = new THREE.MeshStandardMaterial({ color: 0x2A1B11, roughness: 0.9, bumpMap: createNoiseTexture('#2A1B11'), bumpScale: 0.02 }); 
-        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.8 }); 
-        const stripeCanvas = document.createElement('canvas'); stripeCanvas.width = 512; stripeCanvas.height = 512;
-        const stripeCtx = stripeCanvas.getContext('2d'); const stripeTex = new THREE.CanvasTexture(stripeCanvas);
-        const abdMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.9, bumpMap: stripeTex, bumpScale: 0.05 });
-        const realisticWingMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, roughness: 0.1, metalness: 0.1, clearcoat: 1.0, side: THREE.DoubleSide });
-        const wingOutlineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.8 });
-        const pollenMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0x555500, roughness: 0.7 }); 
-        
-        function rebuildBeeMesh() {
-            beeMaster.remove(beeGroup);
-            beeGroup = new THREE.Group();
-            beeMaster.add(beeGroup);
-            wingPivots.length = 0; legs.length = 0; pollenBaskets.length = 0; 
-            
-            while(accessories.children.length > 0) { accessories.remove(accessories.children[0]); }
-            
-            if (state.stage === 'egg') {
-                beeMaster.scale.set(0.5, 0.5, 0.5); 
-                
-                const eggMat = new THREE.MeshStandardMaterial({color: state.eggColor || '#ffd700', emissive: 0x222222, roughness: 0.2, metalness: 0.2});
-                const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
-                egg.scale.set(0.85, 1.2, 0.85); 
-                egg.position.set(0, 1.8, 0); 
-                egg.castShadow = true;
-                
-                if (beeMaster.userData && beeMaster.userData.isCracked) {
-                    const crackMat = new THREE.LineBasicMaterial({ color: 0x553300, linewidth: 3 });
-                    const crackPoints = [];
-                    crackPoints.push(new THREE.Vector3(0, 1.0, 1.118));
-                    crackPoints.push(new THREE.Vector3(0.4, 0.5, 1.356));
-                    crackPoints.push(new THREE.Vector3(-0.3, 0, 1.469));
-                    crackPoints.push(new THREE.Vector3(0.4, -0.5, 1.356));
-                    crackPoints.push(new THREE.Vector3(0, -1.0, 1.118));
-                    crackPoints.forEach(p => p.multiplyScalar(1.02)); 
-                    
-                    const crackGeo = new THREE.BufferGeometry().setFromPoints(crackPoints);
-                    const crackLine = new THREE.Line(crackGeo, crackMat);
-                    egg.add(crackLine);
-                }
-                
-                beeGroup.add(egg);
-                if(beeMaster.position.length() < 0.1) beeMaster.position.set(0, 0, 0); 
-                targetPosition.copy(beeMaster.position);
-            } 
-            else if (state.stage === 'larva') {
-                const growthFactor = Math.min(1.0, Math.max(0, (Date.now() - state.stageStart) / (24 * 3600000)));
-                const larvaScale = 0.3 + (0.5 * growthFactor); // Smooth continuous growth!
-                beeMaster.scale.set(larvaScale, larvaScale, larvaScale); 
-                
-                const larvaGroup = new THREE.Group();
-                const grubMat = new THREE.MeshStandardMaterial({color: 0xfffacd, roughness: 0.5}); 
-                for(let i=0; i<4; i++) {
-                    const seg = new THREE.Mesh(new THREE.SphereGeometry(1.0 - (i*0.1), 32, 32), grubMat);
-                    seg.position.set(0, 0.6, i * -0.7); seg.castShadow = true; larvaGroup.add(seg);
-                }
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.2), eyeMat); eye.position.set(0.4, 0.9, 0.8);
-                const eye2 = eye.clone(); eye2.position.set(-0.4, 0.9, 0.8);
-                larvaGroup.add(eye, eye2);
-                beeGroup.add(larvaGroup);
-            }
-            else {
-                if (state.stage === 'child') beeMaster.scale.set(0.25, 0.25, 0.25);
-                else beeMaster.scale.set(0.5, 0.5, 0.5); 
-
-                const thorax = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32), fuzzMat);
-                thorax.scale.set(1.0, 0.95, 1.1); thorax.position.set(0, 1.2, 0); thorax.castShadow = true; beeGroup.add(thorax);
-                
-                const abdomen = new THREE.Mesh(new THREE.SphereGeometry(1.25, 32, 32), abdMat);
-                abdomen.scale.set(1.0, 1.0, 1.6); abdomen.position.set(0, 1.0, -1.4); abdomen.rotation.x = 0.15; abdomen.castShadow = true; beeGroup.add(abdomen);
-                
-                const headGroup = new THREE.Group(); headGroup.position.set(0, 1.1, 1.1);
-                const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.85, 32, 32), headMat);
-                headBase.scale.set(1.1, 0.9, 0.8); headBase.castShadow = true; headGroup.add(headBase);
-                
-                const eyeGeo = new THREE.SphereGeometry(0.45, 32, 32); eyeGeo.scale(0.8, 1.4, 1.1);
-                const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.55, 0.1, 0.1); eyeR.rotation.y = 0.3;
-                const eyeL = eyeR.clone(); eyeL.position.set(-0.55, 0.1, 0.1); eyeL.rotation.y = -0.3;
-                headGroup.add(eyeR, eyeL);
-                
-                const createAntenna = (x, rotZ) => {
-                    const ant = new THREE.Group();
-                    const seg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.5), headMat); seg1.position.y = 0.25;
-                    const joint = new THREE.Mesh(new THREE.SphereGeometry(0.04), headMat); joint.position.y = 0.5;
-                    const seg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), headMat);
-                    seg2.position.set(0, 0.7, 0.2); seg2.rotation.x = 0.5;
-                    ant.add(seg1, joint, seg2); ant.position.set(x, 0.6, 0.3); ant.rotation.set(0.2, 0, rotZ);
-                    return ant;
-                };
-                headGroup.add(createAntenna(0.3, -0.4), createAntenna(-0.3, 0.4)); beeGroup.add(headGroup);
-                
-                const createSolidWing = (x, z, scaleX, scaleZ, rotY) => {
-                    const pivot = new THREE.Group(); pivot.position.set(x, 2.2, z); pivot.rotation.y = rotY; pivot.rotation.x = -0.1; 
-                    const wingGeo = new THREE.SphereGeometry(1.5, 32, 32);
-                    const wing = new THREE.Mesh(wingGeo, realisticWingMat); wing.position.set(0, 0, -1.5); wing.scale.set(scaleX * 0.4, 0.02, scaleZ * 1.2); wing.castShadow = true;
-                    const outline = new THREE.LineSegments(new THREE.EdgesGeometry(wingGeo), wingOutlineMat); wing.add(outline);
-                    pivot.add(wing); beeGroup.add(pivot); wingPivots.push({ pivot: pivot, sign: x > 0 ? 1 : -1 });
-                };
-                createSolidWing(0.4, 0.2, 0.8, 1.0, 0.3); createSolidWing(-0.4, 0.2, 0.8, 1.0, -0.3); 
-                createSolidWing(0.3, -0.2, 0.6, 0.8, 0.6); createSolidWing(-0.3, -0.2, 0.6, 0.8, -0.6);
-                
-                const createRealisticLeg = (x, z, rotY, isHindLeg) => {
-                    const legGroup = new THREE.Group(); legGroup.position.set(x, 0.8, z); legGroup.rotation.y = rotY;
-                    const femur = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.6), headMat); femur.position.set(0, -0.3, 0); femur.rotation.z = -0.5;
-                    const tibia = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.8), headMat); tibia.position.set(0.3, -0.9, 0); tibia.rotation.z = 0.2;
-                    legGroup.add(femur, tibia);
-                    if (isHindLeg) {
-                        const pollen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), pollenMat);
-                        pollen.scale.set(0.6, 1.2, 0.8); pollen.position.set(0.35, -0.7, 0); pollen.scale.setScalar(0.01); 
-                        legGroup.add(pollen); pollenBaskets.push(pollen);
-                    }
-                    beeGroup.add(legGroup); legs.push(legGroup);
-                };
-                createRealisticLeg(0.8, 0.5, 0.2, false); createRealisticLeg(-0.8, 0.5, -0.2, false); 
-                createRealisticLeg(0.9, 0, 0, false); createRealisticLeg(-0.9, 0, 0, false);      
-                createRealisticLeg(0.7, -0.6, -0.2, true); createRealisticLeg(-0.7, -0.6, 0.2, true);  
-                headGroup.add(accessories); 
-            }
-            
-            applyBeeCustomization();
-        }
-        
-        const beeHitBoxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, depthWrite: false });
-        const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 16), beeHitBoxMat);
-        beeHitBox.position.set(0, 1.5, 0);
-        beeMaster.add(beeHitBox);
-        
-        function updateChildrenMeshes() {
-            while (childBees.length < state.children && childBees.length < 10) { 
-                const child = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({color: 0xfffacd}));
-                child.position.set(Math.random()*10 - 5, 1.0, Math.random()*10 - 5);
-                scene.add(child);
-                childBees.push(child);
-            }
-        }
-
-        const butterflyGroup = new THREE.Group();
-        const bShape = new THREE.Shape(); bShape.moveTo(0, 0); bShape.bezierCurveTo(0.4, 0.4, 0.8, 0.2, 0.6, -0.2); bShape.bezierCurveTo(0.5, -0.6, 0.1, -0.5, 0, 0);
-        const bfWingMat = new THREE.MeshStandardMaterial({color: 0x3b82f6, side: THREE.DoubleSide, roughness: 0.2, transparent: true, opacity: 0.9});
-        const bfWingGeo = new THREE.ShapeGeometry(bShape);
-        const bfWingR = new THREE.Mesh(bfWingGeo, bfWingMat); const bfWingL = new THREE.Mesh(bfWingGeo, bfWingMat); bfWingL.rotation.y = Math.PI; 
-        const bfBody = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5), new THREE.MeshBasicMaterial({color: 0x111111})); bfBody.rotation.x = Math.PI/2;
-        butterflyGroup.add(bfWingR, bfWingL, bfBody); butterflyGroup.position.set(5, 5, -15); butterflyGroup.visible = false; scene.add(butterflyGroup);
-
-        const ladybugGroup = new THREE.Group();
-        const lbBody = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16, 0, Math.PI * 2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0xef4444, roughness: 0.2}));
-        const lbHead = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color: 0x111111})); lbHead.position.set(0, 0.1, 0.4); 
-        ladybugGroup.add(lbBody, lbHead); const spotMat = new THREE.MeshStandardMaterial({color: 0x111111});
-        for(let i=0; i<5; i++) { const spot = new THREE.Mesh(new THREE.SphereGeometry(0.1), spotMat); const angle = i * (Math.PI * 2) / 5; spot.position.set(Math.cos(angle)*0.25, 0.4, Math.sin(angle)*0.25); ladybugGroup.add(spot); }
-        ladybugGroup.scale.set(2.0, 2.0, 2.0); ladybugGroup.position.set(0, 0, -12); ladybugGroup.visible = false; scene.add(ladybugGroup);
-        
-        const caterpillarGroup = new THREE.Group();
-        const catMat = new THREE.MeshStandardMaterial({color: 0x84cc16, roughness: 0.8});
+    } else if (state.hiveLevel === 2) {
         for(let i=0; i<5; i++) {
-            const seg = new THREE.Mesh(new THREE.SphereGeometry(0.4 - (i*0.05)), catMat);
-            seg.position.set(0, 0.4, i * -0.6);
-            caterpillarGroup.add(seg);
+            const radius = 4.2 - (i * 0.5);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.9, 16, 32), hiveMat);
+            ring.position.y = i * 1.3 + 0.9; ring.rotation.x = Math.PI / 2;
+            ring.castShadow = true; ring.receiveShadow = true; hiveGroup.add(ring);
         }
-        caterpillarGroup.position.set(-8, 0, 5); caterpillarGroup.visible = false; scene.add(caterpillarGroup);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(3.5, 3, 16), new THREE.MeshStandardMaterial({color: 0x8b4513, roughness: 0.9}));
+        roof.position.y = 7.5; roof.castShadow = true; hiveGroup.add(roof);
+    } else if (state.hiveLevel === 3) {
+        const whiteMat = new THREE.MeshStandardMaterial({color: 0xf1f5f9, roughness: 0.8});
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 4, 32), whiteMat);
+        base.position.y = 2; base.castShadow = true; hiveGroup.add(base);
+        const mid = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 4.5, 3, 32), hiveMat);
+        mid.position.y = 5.5; mid.castShadow = true; hiveGroup.add(mid);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(4.2, 4, 16), new THREE.MeshStandardMaterial({color: 0x4a0404, roughness: 0.9}));
+        roof.position.y = 9.0; roof.castShadow = true; hiveGroup.add(roof);
+    } else if (state.hiveLevel === 4) {
+        const purpMat = new THREE.MeshStandardMaterial({color: 0x6b21a8, roughness: 0.7});
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 5, 6), purpMat);
+        base.position.y = 2.5; base.castShadow = true; hiveGroup.add(base);
+        const mid = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 4.5, 4, 6), goldMat);
+        mid.position.y = 7; mid.castShadow = true; hiveGroup.add(mid);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(4.0, 4, 6), purpMat);
+        roof.position.y = 11; roof.castShadow = true; hiveGroup.add(roof);
+    } else {
+        door.visible = false; pad.visible = false;
+        const glassMat = new THREE.MeshPhysicalMaterial({color: 0x38bdf8, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.1});
+        const coreMat = new THREE.MeshStandardMaterial({color: 0xffea00, emissive: 0xffaa00});
+        const core = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), coreMat);
+        core.position.y = 6; hiveGroup.add(core);
+        const shell = new THREE.Mesh(new THREE.DodecahedronGeometry(4.5, 0), glassMat);
+        shell.position.y = 6; hiveGroup.add(shell);
+        for(let i=0; i<3; i++) {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(6.5 - i, 0.2, 8, 32), goldMat);
+            ring.position.y = 4 + i*2; ring.rotation.x = Math.PI / 2;
+            hiveGroup.add(ring);
+        }
+    }
+}
 
-        const dragonflyGroup = new THREE.Group();
-        const dfBody = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 2.5), new THREE.MeshStandardMaterial({color: 0x0ea5e9}));
-        dfBody.rotation.x = Math.PI / 2;
-        const dfWingMat = new THREE.MeshPhysicalMaterial({color: 0xffffff, transparent: true, opacity: 0.4, side: THREE.DoubleSide});
-        const createDfWing = (x, z, rotY) => {
-            const w = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.01, 0.3), dfWingMat);
-            w.position.set(x, 0.1, z); w.rotation.y = rotY; return w;
+hiveGroup.position.set(0, 0, -20);
+const hiveDoorTarget = new THREE.Vector3(0, 2, -18);
+const hiveHitBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0, depthWrite: false });
+const hiveHitBox = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 15, 16), hiveHitBoxMat);
+hiveHitBox.position.copy(hiveGroup.position); hiveHitBox.position.y += 4;
+scene.add(hiveHitBox);
+
+const boxGroup = new THREE.Group();
+const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 7), new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 0.9}));
+boxMesh.position.set(0, 3.5, -20); boxMesh.castShadow = true; boxGroup.add(boxMesh);
+scene.add(boxGroup);
+const boxHitBoxMat = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0, depthWrite: false });
+const boxHitBox = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), boxHitBoxMat);
+boxHitBox.position.copy(boxMesh.position);
+scene.add(boxHitBox);
+
+hiveGroup.visible = state.hiveUnlocked;
+boxGroup.visible = (!state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child'));
+
+const beeMaster = new THREE.Group();
+scene.add(beeMaster);
+let beeGroup = new THREE.Group();
+beeMaster.add(beeGroup);
+
+let wingPivots = []; let legs = []; let pollenBaskets = [];
+let currentAccessoryMesh = null; const accessories = new THREE.Group();
+const childBees = [];
+
+function createNoiseTexture(colorHex, intensity=0.1) {
+    const cvs = document.createElement('canvas'); cvs.width = 128; cvs.height = 128;
+    const ctx = cvs.getContext('2d');
+    ctx.fillStyle = colorHex; ctx.fillRect(0,0,128,128);
+    for(let i=0; i<800; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? `rgba(0,0,0,${intensity})` : `rgba(255,255,255,${intensity})`;
+        ctx.fillRect(Math.random()*128, Math.random()*128, 2, 2);
+    }
+    const tex = new THREE.CanvasTexture(cvs); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+}
+
+const fuzzTex = createNoiseTexture('#B87333', 0.15);
+const fuzzMat = new THREE.MeshStandardMaterial({ map: fuzzTex, bumpMap: fuzzTex, bumpScale: 0.08, roughness: 1.0 });
+const headMat = new THREE.MeshStandardMaterial({ color: 0x2A1B11, roughness: 0.9, bumpMap: createNoiseTexture('#2A1B11'), bumpScale: 0.02 });
+const eyeMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.8 });
+const stripeCanvas = document.createElement('canvas'); stripeCanvas.width = 512; stripeCanvas.height = 512;
+const stripeCtx = stripeCanvas.getContext('2d'); const stripeTex = new THREE.CanvasTexture(stripeCanvas);
+const abdMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.9, bumpMap: stripeTex, bumpScale: 0.05 });
+const realisticWingMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, roughness: 0.1, metalness: 0.1, clearcoat: 1.0, side: THREE.DoubleSide });
+const wingOutlineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.8 });
+const pollenMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0x555500, roughness: 0.7 });
+
+function rebuildBeeMesh() {
+    beeMaster.remove(beeGroup);
+    beeGroup = new THREE.Group();
+    beeMaster.add(beeGroup);
+    wingPivots.length = 0; legs.length = 0; pollenBaskets.length = 0;
+
+    while(accessories.children.length > 0) { accessories.remove(accessories.children[0]); }
+
+    if (state.stage === 'egg') {
+        beeMaster.scale.set(0.5, 0.5, 0.5);
+        const eggMat = new THREE.MeshStandardMaterial({color: state.eggColor || '#ffd700', emissive: 0x222222, roughness: 0.2, metalness: 0.2});
+        const egg = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), eggMat);
+        egg.scale.set(0.85, 1.2, 0.85);
+        egg.position.set(0, 1.8, 0);
+        egg.castShadow = true;
+
+        if (beeMaster.userData && beeMaster.userData.isCracked) {
+            const crackMat = new THREE.LineBasicMaterial({ color: 0x553300, linewidth: 3 });
+            const crackPoints = [];
+            crackPoints.push(new THREE.Vector3(0, 1.0, 1.118));
+            crackPoints.push(new THREE.Vector3(0.4, 0.5, 1.356));
+            crackPoints.push(new THREE.Vector3(-0.3, 0, 1.469));
+            crackPoints.push(new THREE.Vector3(0.4, -0.5, 1.356));
+            crackPoints.push(new THREE.Vector3(0, -1.0, 1.118));
+            crackPoints.forEach(p => p.multiplyScalar(1.02));
+            const crackGeo = new THREE.BufferGeometry().setFromPoints(crackPoints);
+            const crackLine = new THREE.Line(crackGeo, crackMat);
+            egg.add(crackLine);
+        }
+        beeGroup.add(egg);
+        if(beeMaster.position.length() < 0.1) beeMaster.position.set(0, 0, 0);
+        targetPosition.copy(beeMaster.position);
+    }
+    else if (state.stage === 'larva') {
+        // GDD dictates 3 specific sizes based on Larva Day block
+        let larvaScale = 0.3;
+        if (state.larvaDay === 2) larvaScale = 0.5;
+        if (state.larvaDay === 3) larvaScale = 0.8;
+        
+        beeMaster.scale.set(larvaScale, larvaScale, larvaScale);
+
+        const larvaGroup = new THREE.Group();
+        const grubMat = new THREE.MeshStandardMaterial({color: 0xfffacd, roughness: 0.5});
+        for(let i=0; i<4; i++) {
+            const seg = new THREE.Mesh(new THREE.SphereGeometry(1.0 - (i*0.1), 32, 32), grubMat);
+            seg.position.set(0, 0.6, i * -0.7); seg.castShadow = true; larvaGroup.add(seg);
+        }
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.2), eyeMat); eye.position.set(0.4, 0.9, 0.8);
+        const eye2 = eye.clone(); eye2.position.set(-0.4, 0.9, 0.8);
+        larvaGroup.add(eye, eye2);
+        beeGroup.add(larvaGroup);
+    }
+    else {
+        if (state.stage === 'child') {
+            let cScale = state.childDay === 1 ? 0.25 : 0.35;
+            beeMaster.scale.set(cScale, cScale, cScale);
+        } else {
+            beeMaster.scale.set(0.5, 0.5, 0.5);
+        }
+
+        const thorax = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32), fuzzMat);
+        thorax.scale.set(1.0, 0.95, 1.1); thorax.position.set(0, 1.2, 0); thorax.castShadow = true; beeGroup.add(thorax);
+
+        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(1.25, 32, 32), abdMat);
+        abdomen.scale.set(1.0, 1.0, 1.6); abdomen.position.set(0, 1.0, -1.4); abdomen.rotation.x = 0.15; abdomen.castShadow = true; beeGroup.add(abdomen);
+
+        const headGroup = new THREE.Group(); headGroup.position.set(0, 1.1, 1.1);
+        const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.85, 32, 32), headMat);
+        headBase.scale.set(1.1, 0.9, 0.8); headBase.castShadow = true; headGroup.add(headBase);
+
+        const eyeGeo = new THREE.SphereGeometry(0.45, 32, 32); eyeGeo.scale(0.8, 1.4, 1.1);
+        const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.55, 0.1, 0.1); eyeR.rotation.y = 0.3;
+        const eyeL = eyeR.clone(); eyeL.position.set(-0.55, 0.1, 0.1); eyeL.rotation.y = -0.3;
+        headGroup.add(eyeR, eyeL);
+
+        const createAntenna = (x, rotZ) => {
+            const ant = new THREE.Group();
+            const seg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.5), headMat); seg1.position.y = 0.25;
+            const joint = new THREE.Mesh(new THREE.SphereGeometry(0.04), headMat); joint.position.y = 0.5;
+            const seg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), headMat);
+            seg2.position.set(0, 0.7, 0.2); seg2.rotation.x = 0.5;
+            ant.add(seg1, joint, seg2); ant.position.set(x, 0.6, 0.3); ant.rotation.set(0.2, 0, rotZ);
+            return ant;
         };
-        const dfW1 = createDfWing(1.0, 0.3, 0.2); const dfW2 = createDfWing(-1.0, 0.3, -0.2);
-        const dfW3 = createDfWing(1.0, -0.2, -0.1); const dfW4 = createDfWing(-1.0, -0.2, 0.1);
-        dragonflyGroup.add(dfBody, dfW1, dfW2, dfW3, dfW4);
-        dragonflyGroup.position.set(-15, 8, -5); dragonflyGroup.visible = false; scene.add(dragonflyGroup);
+        headGroup.add(createAntenna(0.3, -0.4), createAntenna(-0.3, 0.4)); beeGroup.add(headGroup);
 
-        const fireflyGroup = new THREE.Group();
-        const ffBody = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.5), new THREE.MeshStandardMaterial({color: 0x451a03})); ffBody.rotation.x = Math.PI/2;
-        const ffGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: 0xeab308, emissive: 0xffea00, emissiveIntensity: 1.0})); ffGlow.position.set(0, 0, -0.3);
-        fireflyGroup.add(ffBody, ffGlow); fireflyGroup.scale.set(2, 2, 2); fireflyGroup.visible = false; scene.add(fireflyGroup);
-        
-        function checkFriends() {
-            const daysOld = (Date.now() - state.birthDate) / (1000 * 60 * 60 * 24);
-            const growthScore = (daysOld * 0.5) + (state.totalFood * 0.05);
-            if ((state.stats.honeyJars >= 1.0 || growthScore >= 0.5) && !state.friendsUnlocked.butterfly) {
-                state.friendsUnlocked.butterfly = true; logUI("🦋 A beautiful Blue Butterfly has moved into the garden!"); spawnFloatingEmoji('🦋', hiveGroup.position.clone().add(new THREE.Vector3(0,5,0)));
-            }
-            if ((state.stats.honeyJars >= 3.0 || growthScore >= 1.0) && !state.friendsUnlocked.ladybug) {
-                state.friendsUnlocked.ladybug = true; logUI("🐞 A little Ladybug is crawling near the hive!"); spawnFloatingEmoji('🐞', ladybugGroup.position);
-            }
-            if ((state.stats.honeyJars >= 5.0 || growthScore >= 1.5) && !state.friendsUnlocked.caterpillar) {
-                state.friendsUnlocked.caterpillar = true; logUI("🐛 A cute green Caterpillar is exploring the grass!"); spawnFloatingEmoji('🐛', caterpillarGroup.position);
-            }
-            if ((state.stats.honeyJars >= 10.0 || growthScore >= 2.0) && !state.friendsUnlocked.dragonfly) {
-                state.friendsUnlocked.dragonfly = true; logUI("🪲 A fast Dragonfly is buzzing around the garden!"); spawnFloatingEmoji('🪲', dragonflyGroup.position);
-            }
-            if ((state.stats.honeyJars >= 15.0 || growthScore >= 3.0) && !state.friendsUnlocked.firefly) {
-                state.friendsUnlocked.firefly = true; logUI("✨ A magical Firefly arrived! It glows at night!"); spawnFloatingEmoji('✨', hiveGroup.position.clone().add(new THREE.Vector3(-5,5,0)));
-            }
-            butterflyGroup.visible = state.friendsUnlocked.butterfly; ladybugGroup.visible = state.friendsUnlocked.ladybug;
-            caterpillarGroup.visible = state.friendsUnlocked.caterpillar; dragonflyGroup.visible = state.friendsUnlocked.dragonfly;
-            fireflyGroup.visible = state.friendsUnlocked.firefly;
-        }
-        function applyBeeCustomization() {
-            if(state.stage !== 'adult' && state.stage !== 'child') return; 
-            stripeCtx.fillStyle = state.color; stripeCtx.fillRect(0, 0, 512, 512);
-            for(let i=0; i<1500; i++) { 
-                stripeCtx.fillStyle = Math.random()>0.5 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; 
-                stripeCtx.fillRect(Math.random()*512, Math.random()*512, 4, 4); 
-            }
-            stripeCtx.fillStyle = '#1A1108'; stripeCtx.shadowColor = '#1A1108'; stripeCtx.shadowBlur = 20; 
-            stripeCtx.fillRect(0, 80, 512, 60); stripeCtx.fillRect(0, 200, 512, 60); stripeCtx.fillRect(0, 320, 512, 60); stripeCtx.fillRect(0, 440, 512, 60); stripeTex.needsUpdate = true;
-            if (currentAccessoryMesh) { accessories.remove(currentAccessoryMesh); currentAccessoryMesh = null; }
-            const acc = document.getElementById('sel-accessory').value;
-            if (acc === 'tophat') {
-                const hat = new THREE.Group(); const brim = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.1, 32), headMat); const top = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.2, 32), headMat);
-                top.position.y = 0.6; hat.add(brim, top); hat.position.set(0, 0.9, 0); hat.rotation.x = -0.1; currentAccessoryMesh = hat; accessories.add(hat);
-            } 
-            else if (acc === 'crown') {
-                const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.5, 0.6, 8, 1, true), new THREE.MeshStandardMaterial({color: 0xfbbf24, metalness: 0.9, roughness: 0.1, side: THREE.DoubleSide}));
-                const pos = crown.geometry.attributes.position; for(let i=0; i<pos.count; i++) { if(pos.getY(i) > 0 && i % 2 === 0) pos.setY(i, 0.8); }
-                crown.geometry.computeVertexNormals(); crown.position.set(0, 0.9, 0); crown.rotation.x = -0.1; currentAccessoryMesh = crown; accessories.add(crown);
-            }
-            else if (acc === 'flowercrown') {
-                const fc = new THREE.Group(); const colors = [0xff69b4, 0x4ade80, 0xfacc15, 0xa78bfa, 0x60a5fa];
-                for(let i=0; i<9; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: colors[i%colors.length], roughness: 0.5})); const angle = (i/9)*Math.PI*2; fl.position.set(Math.cos(angle)*0.7, 0, Math.sin(angle)*0.7); fc.add(fl); }
-                fc.position.set(0, 0.8, 0); fc.rotation.x = -0.2; currentAccessoryMesh = fc; accessories.add(fc);
-            }
-            else if (acc === 'bowtie') {
-                const bt = new THREE.Group(); const mat = new THREE.MeshStandardMaterial({color: 0xef4444});
-                const left = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 16), mat); left.rotation.z = Math.PI/2; left.position.x = -0.3;
-                const right = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 16), mat); right.rotation.z = -Math.PI/2; right.position.x = 0.3;
-                const mid = new THREE.Mesh(new THREE.SphereGeometry(0.15), mat); bt.add(left, right, mid); bt.position.set(0, -1.0, 0.8); currentAccessoryMesh = bt; accessories.add(bt); 
-            }
-        }
-        
-        document.getElementById('inp-color').addEventListener('input', (e) => { state.color = e.target.value; applyBeeCustomization(); });
-        document.getElementById('sel-egg-color').addEventListener('change', (e) => { 
-            state.eggColor = e.target.value; 
-            if(state.stage === 'egg') rebuildBeeMesh(); 
-        });
-        document.getElementById('sel-accessory').addEventListener('change', (e) => { state.accessory = e.target.value; applyBeeCustomization(); });
-        
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); 
-        let pointerIntersect = new THREE.Vector3(0, 1000, 0);
-        
-        let targetPosition = new THREE.Vector3(0, 0, 0);
-        let items = []; 
-        let isBeingPetted = false;
-        let petTimer = 0;
-        let isDoingWaggle = false; 
-        let waggleTimer = 0;
-        let totalPets = 0; 
-        let trailParticles = [];
-        let isPlantingSeed = false;
-        let activeSeedMeshes = [];
-        let isDraggingEgg = false;
-        let timeSinceLastFlower = 0; 
+        const createSolidWing = (x, z, scaleX, scaleZ, rotY) => {
+            const pivot = new THREE.Group(); pivot.position.set(x, 2.2, z); pivot.rotation.y = rotY; pivot.rotation.x = -0.1;
+            const wingGeo = new THREE.SphereGeometry(1.5, 32, 32);
+            const wing = new THREE.Mesh(wingGeo, realisticWingMat); wing.position.set(0, 0, -1.5); wing.scale.set(scaleX * 0.4, 0.02, scaleZ * 1.2); wing.castShadow = true;
+            const outline = new THREE.LineSegments(new THREE.EdgesGeometry(wingGeo), wingOutlineMat); wing.add(outline);
+            pivot.add(wing); beeGroup.add(pivot); wingPivots.push({ pivot: pivot, sign: x > 0 ? 1 : -1 });
+        };
+        createSolidWing(0.4, 0.2, 0.8, 1.0, 0.3); createSolidWing(-0.4, 0.2, 0.8, 1.0, -0.3);
+        createSolidWing(0.3, -0.2, 0.6, 0.8, 0.6); createSolidWing(-0.3, -0.2, 0.6, 0.8, -0.6);
 
-        document.getElementById('btn-seed').addEventListener('click', () => {
-            if (state.stage === 'egg' || state.stage === 'larva') { return; }
-            if (state.seeds.length >= 4) { logUI("You already have 4 magic seeds growing! 🌱"); return; }
-            isPlantingSeed = true; document.body.classList.add('cursor-plant'); logUI(`Tap anywhere to plant a seed! (${state.seeds.length}/4 planted)`);
-        });
-        function renderSeeds() {
-            activeSeedMeshes.forEach(mesh => { scene.remove(mesh); items = items.filter(i => i.mesh !== mesh); });
-            activeSeedMeshes = [];
-            const bloomTime = 2 * 60 * 60 * 1000; 
-            
-            state.seeds.forEach(seedData => {
-                const timeElapsed = Date.now() - seedData.plantedAt;
-                const seedPos = new THREE.Vector3(seedData.position.x, 0, seedData.position.z);
-                let currentMesh;
-                if (timeElapsed >= bloomTime || seedData.bloomed) {
-                    seedData.bloomed = true; currentMesh = new THREE.Group();
-                    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 6.0), new THREE.MeshStandardMaterial({color: 0x10b981})); stem.position.y = 3.0; currentMesh.add(stem);
-                    const bloom = new THREE.Group(); bloom.position.y = 6.0;
-                    const center = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 16), new THREE.MeshStandardMaterial({color: 0xffea00, emissive: 0xaa8800})); bloom.add(center);
-                    for(let i=0; i<12; i++) {
-                        const petal = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), new THREE.MeshPhysicalMaterial({color: 0xc084fc, transmission: 0.9, opacity: 0.8, transparent: true}));
-                        petal.scale.set(1, 0.2, 3.5); const angle = (i / 12) * Math.PI * 2; petal.position.set(Math.cos(angle)*1.5, 0, Math.sin(angle)*1.5); petal.rotation.y = -angle; bloom.add(petal);
-                    }
-                    currentMesh.add(bloom); currentMesh.position.copy(seedPos); scene.add(currentMesh);
-                    items.push({ mesh: currentMesh, scaleTarget: 1.0, type: 'crystal', seedId: seedData.id });
-                } else {
-                    currentMesh = new THREE.Group();
-                    const mound = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 1.0}));
-                    mound.scale.set(1, 0.4, 1); currentMesh.add(mound);
-                    const sprout = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({color: 0x4ade80})); 
-                    sprout.scale.set(1, 0.3, 2); sprout.position.set(0, 0.1, 0); sprout.rotation.z = 0.5; sprout.rotation.y = Math.random()*Math.PI; currentMesh.add(sprout);
-                    currentMesh.position.copy(seedPos); scene.add(currentMesh);
-                }
-                activeSeedMeshes.push(currentMesh);
-            });
-            const unbloomed = state.seeds.filter(s => !s.bloomed);
-            if (unbloomed.length > 0) { document.getElementById('seed-timer').classList.remove('hidden'); document.getElementById('seed-timer').innerText = `${unbloomed.length} seed(s) growing...`; } 
-            else { document.getElementById('seed-timer').classList.add('hidden'); }
+        const createRealisticLeg = (x, z, rotY, isHindLeg) => {
+            const legGroup = new THREE.Group(); legGroup.position.set(x, 0.8, z); legGroup.rotation.y = rotY;
+            const femur = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.6), headMat); femur.position.set(0, -0.3, 0); femur.rotation.z = -0.5;
+            const tibia = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.8), headMat); tibia.position.set(0.3, -0.9, 0); tibia.rotation.z = 0.2;
+            legGroup.add(femur, tibia);
+            if (isHindLeg) {
+                const pollen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), pollenMat);
+                pollen.scale.set(0.6, 1.2, 0.8); pollen.position.set(0.35, -0.7, 0); pollen.scale.setScalar(0.01);
+                legGroup.add(pollen); pollenBaskets.push(pollen);
+            }
+            beeGroup.add(legGroup); legs.push(legGroup);
+        };
+        createRealisticLeg(0.8, 0.5, 0.2, false); createRealisticLeg(-0.8, 0.5, -0.2, false);
+        createRealisticLeg(0.9, 0, 0, false); createRealisticLeg(-0.9, 0, 0, false);
+        createRealisticLeg(0.7, -0.6, -0.2, true); createRealisticLeg(-0.7, -0.6, 0.2, true);
+        headGroup.add(accessories);
+    }
+    applyBeeCustomization();
+}
+
+const beeHitBoxMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0, depthWrite: false });
+const beeHitBox = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 16), beeHitBoxMat);
+beeHitBox.position.set(0, 1.5, 0);
+beeMaster.add(beeHitBox);
+
+function updateChildrenMeshes() {
+    while (childBees.length < state.children && childBees.length < 10) {
+        const child = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({color: 0xfffacd}));
+        child.position.set(Math.random()*10 - 5, 1.0, Math.random()*10 - 5);
+        scene.add(child);
+        childBees.push(child);
+    }
+}
+
+const butterflyGroup = new THREE.Group();
+const bShape = new THREE.Shape(); bShape.moveTo(0, 0); bShape.bezierCurveTo(0.4, 0.4, 0.8, 0.2, 0.6, -0.2); bShape.bezierCurveTo(0.5, -0.6, 0.1, -0.5, 0, 0);
+const bfWingMat = new THREE.MeshStandardMaterial({color: 0x3b82f6, side: THREE.DoubleSide, roughness: 0.2, transparent: true, opacity: 0.9});
+const bfWingGeo = new THREE.ShapeGeometry(bShape);
+const bfWingR = new THREE.Mesh(bfWingGeo, bfWingMat); const bfWingL = new THREE.Mesh(bfWingGeo, bfWingMat); bfWingL.rotation.y = Math.PI;
+const bfBody = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5), new THREE.MeshBasicMaterial({color: 0x111111})); bfBody.rotation.x = Math.PI/2;
+butterflyGroup.add(bfWingR, bfWingL, bfBody); butterflyGroup.position.set(5, 5, -15); butterflyGroup.visible = false; scene.add(butterflyGroup);
+
+const ladybugGroup = new THREE.Group();
+const lbBody = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16, 0, Math.PI * 2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0xef4444, roughness: 0.2}));
+const lbHead = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color: 0x111111})); lbHead.position.set(0, 0.1, 0.4);
+ladybugGroup.add(lbBody, lbHead); const spotMat = new THREE.MeshStandardMaterial({color: 0x111111});
+for(let i=0; i<5; i++) { const spot = new THREE.Mesh(new THREE.SphereGeometry(0.1), spotMat);
+const angle = i * (Math.PI * 2) / 5; spot.position.set(Math.cos(angle)*0.25, 0.4, Math.sin(angle)*0.25); ladybugGroup.add(spot); }
+ladybugGroup.scale.set(2.0, 2.0, 2.0); ladybugGroup.position.set(0, 0, -12); ladybugGroup.visible = false; scene.add(ladybugGroup);
+
+const caterpillarGroup = new THREE.Group();
+const catMat = new THREE.MeshStandardMaterial({color: 0x84cc16, roughness: 0.8});
+for(let i=0; i<5; i++) {
+    const seg = new THREE.Mesh(new THREE.SphereGeometry(0.4 - (i*0.05)), catMat);
+    seg.position.set(0, 0.4, i * -0.6);
+    caterpillarGroup.add(seg);
+}
+caterpillarGroup.position.set(-8, 0, 5); caterpillarGroup.visible = false; scene.add(caterpillarGroup);
+
+const dragonflyGroup = new THREE.Group();
+const dfBody = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 2.5), new THREE.MeshStandardMaterial({color: 0x0ea5e9}));
+dfBody.rotation.x = Math.PI / 2;
+const dfWingMat = new THREE.MeshPhysicalMaterial({color: 0xffffff, transparent: true, opacity: 0.4, side: THREE.DoubleSide});
+const createDfWing = (x, z, rotY) => {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.01, 0.3), dfWingMat);
+    w.position.set(x, 0.1, z); w.rotation.y = rotY; return w;
+};
+const dfW1 = createDfWing(1.0, 0.3, 0.2); const dfW2 = createDfWing(-1.0, 0.3, -0.2);
+const dfW3 = createDfWing(1.0, -0.2, -0.1); const dfW4 = createDfWing(-1.0, -0.2, 0.1);
+dragonflyGroup.add(dfBody, dfW1, dfW2, dfW3, dfW4);
+dragonflyGroup.position.set(-15, 8, -5); dragonflyGroup.visible = false; scene.add(dragonflyGroup);
+
+const fireflyGroup = new THREE.Group();
+const ffBody = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.5), new THREE.MeshStandardMaterial({color: 0x451a03})); ffBody.rotation.x = Math.PI/2;
+const ffGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: 0xeab308, emissive: 0xffea00, emissiveIntensity: 1.0})); ffGlow.position.set(0, 0, -0.3);
+fireflyGroup.add(ffBody, ffGlow); fireflyGroup.scale.set(2, 2, 2); fireflyGroup.visible = false; scene.add(fireflyGroup);
+
+function checkFriends() {
+    const daysOld = (Date.now() - state.birthDate) / (1000 * 60 * 60 * 24);
+    const growthScore = (daysOld * 0.5) + (state.totalFood * 0.05);
+    if ((state.stats.honeyJars >= 1.0 || growthScore >= 0.5) && !state.friendsUnlocked.butterfly) {
+        state.friendsUnlocked.butterfly = true; logUI("🦋 A beautiful Blue Butterfly has moved into the garden!"); spawnFloatingEmoji('🦋', hiveGroup.position.clone().add(new THREE.Vector3(0,5,0)));
+    }
+    if ((state.stats.honeyJars >= 3.0 || growthScore >= 1.0) && !state.friendsUnlocked.ladybug) {
+        state.friendsUnlocked.ladybug = true; logUI("🐞 A little Ladybug is crawling near the hive!"); spawnFloatingEmoji('🐞', ladybugGroup.position);
+    }
+    if ((state.stats.honeyJars >= 5.0 || growthScore >= 1.5) && !state.friendsUnlocked.caterpillar) {
+        state.friendsUnlocked.caterpillar = true; logUI("🐛 A cute green Caterpillar is exploring the grass!"); spawnFloatingEmoji('🐛', caterpillarGroup.position);
+    }
+    if ((state.stats.honeyJars >= 10.0 || growthScore >= 2.0) && !state.friendsUnlocked.dragonfly) {
+        state.friendsUnlocked.dragonfly = true; logUI("🪲 A fast Dragonfly is buzzing around the garden!"); spawnFloatingEmoji('🪲', dragonflyGroup.position);
+    }
+    if ((state.stats.honeyJars >= 15.0 || growthScore >= 3.0) && !state.friendsUnlocked.firefly) {
+        state.friendsUnlocked.firefly = true; logUI("✨ A magical Firefly arrived! It glows at night!"); spawnFloatingEmoji('✨', hiveGroup.position.clone().add(new THREE.Vector3(-5,5,0)));
+    }
+    butterflyGroup.visible = state.friendsUnlocked.butterfly; ladybugGroup.visible = state.friendsUnlocked.ladybug;
+    caterpillarGroup.visible = state.friendsUnlocked.caterpillar; dragonflyGroup.visible = state.friendsUnlocked.dragonfly;
+    fireflyGroup.visible = state.friendsUnlocked.firefly;
+}
+
+function applyBeeCustomization() {
+    if(state.stage !== 'adult' && state.stage !== 'child') return;
+    stripeCtx.fillStyle = state.color; stripeCtx.fillRect(0, 0, 512, 512);
+    for(let i=0; i<1500; i++) {
+        stripeCtx.fillStyle = Math.random()>0.5 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+        stripeCtx.fillRect(Math.random()*512, Math.random()*512, 4, 4);
+    }
+    stripeCtx.fillStyle = '#1A1108'; stripeCtx.shadowColor = '#1A1108'; stripeCtx.shadowBlur = 20;
+    stripeCtx.fillRect(0, 80, 512, 60); stripeCtx.fillRect(0, 200, 512, 60); stripeCtx.fillRect(0, 320, 512, 60); stripeCtx.fillRect(0, 440, 512, 60); stripeTex.needsUpdate = true;
+    
+    if (currentAccessoryMesh) { accessories.remove(currentAccessoryMesh); currentAccessoryMesh = null; }
+    const acc = document.getElementById('sel-accessory').value;
+    if (acc === 'tophat') {
+        const hat = new THREE.Group(); const brim = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.1, 32), headMat);
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.2, 32), headMat);
+        top.position.y = 0.6; hat.add(brim, top); hat.position.set(0, 0.9, 0); hat.rotation.x = -0.1; currentAccessoryMesh = hat; accessories.add(hat);
+    }
+    else if (acc === 'crown') {
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.5, 0.6, 8, 1, true), new THREE.MeshStandardMaterial({color: 0xfbbf24, metalness: 0.9, roughness: 0.1, side: THREE.DoubleSide}));
+        const pos = crown.geometry.attributes.position; for(let i=0; i<pos.count; i++) { if(pos.getY(i) > 0 && i % 2 === 0) pos.setY(i, 0.8); }
+        crown.geometry.computeVertexNormals(); crown.position.set(0, 0.9, 0); crown.rotation.x = -0.1; currentAccessoryMesh = crown; accessories.add(crown);
+    }
+    else if (acc === 'flowercrown') {
+        const fc = new THREE.Group(); const colors = [0xff69b4, 0x4ade80, 0xfacc15, 0xa78bfa, 0x60a5fa];
+        for(let i=0; i<9; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color: colors[i%colors.length], roughness: 0.5})); const angle = (i/9)*Math.PI*2;
+        fl.position.set(Math.cos(angle)*0.7, 0, Math.sin(angle)*0.7); fc.add(fl); }
+        fc.position.set(0, 0.8, 0); fc.rotation.x = -0.2; currentAccessoryMesh = fc; accessories.add(fc);
+    }
+    else if (acc === 'bowtie') {
+        const bt = new THREE.Group(); const mat = new THREE.MeshStandardMaterial({color: 0xef4444});
+        const left = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 16), mat); left.rotation.z = Math.PI/2; left.position.x = -0.3;
+        const right = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 16), mat); right.rotation.z = -Math.PI/2; right.position.x = 0.3;
+        const mid = new THREE.Mesh(new THREE.SphereGeometry(0.15), mat); bt.add(left, right, mid); bt.position.set(0, -1.0, 0.8); currentAccessoryMesh = bt; accessories.add(bt);
+    }
+}
+
+document.getElementById('inp-color').addEventListener('input', (e) => { state.color = e.target.value; applyBeeCustomization(); });
+document.getElementById('sel-egg-color').addEventListener('change', (e) => {
+    state.eggColor = e.target.value;
+    if(state.stage === 'egg') rebuildBeeMesh();
+});
+document.getElementById('sel-accessory').addEventListener('change', (e) => { state.accessory = e.target.value; applyBeeCustomization(); });
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let pointerIntersect = new THREE.Vector3(0, 1000, 0);
+
+let targetPosition = new THREE.Vector3(0, 0, 0);
+let items = [];
+let isBeingPetted = false;
+let petTimer = 0;
+let isDoingWaggle = false;
+let waggleTimer = 0;
+let totalPets = 0;
+let trailParticles = [];
+let isPlantingSeed = false;
+let activeSeedMeshes = [];
+let isDraggingEgg = false;
+let timeSinceLastFlower = 0;
+
+document.getElementById('btn-seed').addEventListener('click', () => {
+    if (state.stage === 'egg' || state.stage === 'larva') { return; }
+    if (state.seeds.length >= 4) { logUI("You already have 4 magic seeds growing! 🌱"); return; }
+    isPlantingSeed = true; document.body.classList.add('cursor-plant'); logUI(`Tap anywhere to plant a seed! (${state.seeds.length}/4 planted)`);
+});
+
+function renderSeeds() {
+    activeSeedMeshes.forEach(mesh => { scene.remove(mesh); items = items.filter(i => i.mesh !== mesh); });
+    activeSeedMeshes = [];
+    const bloomTime = 2 * 60 * 60 * 1000;
+
+    state.seeds.forEach(seedData => {
+        const timeElapsed = Date.now() - seedData.plantedAt;
+        const seedPos = new THREE.Vector3(seedData.position.x, 0, seedData.position.z);
+        let currentMesh;
+        if (timeElapsed >= bloomTime || seedData.bloomed) {
+            seedData.bloomed = true; currentMesh = new THREE.Group();
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 6.0), new THREE.MeshStandardMaterial({color: 0x10b981})); stem.position.y = 3.0; currentMesh.add(stem);
+            const bloom = new THREE.Group(); bloom.position.y = 6.0;
+            const center = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 16), new THREE.MeshStandardMaterial({color: 0xffea00, emissive: 0xaa8800})); bloom.add(center);
+            for(let i=0; i<12; i++) {
+                const petal = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), new THREE.MeshPhysicalMaterial({color: 0xc084fc, transmission: 0.9, opacity: 0.8, transparent: true}));
+                petal.scale.set(1, 0.2, 3.5); const angle = (i / 12) * Math.PI * 2; petal.position.set(Math.cos(angle)*1.5, 0, Math.sin(angle)*1.5); petal.rotation.y = -angle; bloom.add(petal);
+            }
+            currentMesh.add(bloom); currentMesh.position.copy(seedPos); scene.add(currentMesh);
+            items.push({ mesh: currentMesh, scaleTarget: 1.0, type: 'crystal', seedId: seedData.id });
+        } else {
+            currentMesh = new THREE.Group();
+            const mound = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 1.0}));
+            mound.scale.set(1, 0.4, 1); currentMesh.add(mound);
+            const sprout = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({color: 0x4ade80}));
+            sprout.scale.set(1, 0.3, 2); sprout.position.set(0, 0.1, 0); sprout.rotation.z = 0.5; sprout.rotation.y = Math.random()*Math.PI; currentMesh.add(sprout);
+            currentMesh.position.copy(seedPos); scene.add(currentMesh);
         }
-        setInterval(renderSeeds, 60000); 
-        
-        document.getElementById('btn-treat').addEventListener('click', () => {
-            if (state.stage === 'egg') return;
-            if (!checkHourlyLimit()) return;
-            if (state.isSleeping) return;
-            
-            const treatPos = new THREE.Vector3((Math.random() - 0.5) * 15, 0, (Math.random() - 0.5) * 15);
-            if (state.stage === 'larva') {
-                const treat = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0x555555, transparent: true, opacity: 0.9}));
-                treat.scale.set(1, 0.5, 1); treat.position.copy(treatPos); scene.add(treat); items.push({ mesh: treat, scaleTarget: 1.0, type: 'jelly' }); logUI("Dropped some nutritious Royal Jelly! 💧");
+        activeSeedMeshes.push(currentMesh);
+    });
+    const unbloomed = state.seeds.filter(s => !s.bloomed);
+    if (unbloomed.length > 0) { document.getElementById('seed-timer').classList.remove('hidden'); document.getElementById('seed-timer').innerText = `${unbloomed.length} seed(s) growing...`; }
+    else { document.getElementById('seed-timer').classList.add('hidden'); }
+}
+setInterval(renderSeeds, 60000);
+
+// Standalone function to drop flowers that can be shared between the button and tapping the grass
+function dropFlower(position) {
+    const flowerTypes = ['daisy', 'sunflower', 'tulip', 'bluebell']; const type = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
+    const flower = new THREE.Group(); const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshStandardMaterial({color: 0x4ade80})); stem.position.y = 0.5; flower.add(stem);
+    const bloom = new THREE.Group(); bloom.position.y = 1.0;
+    if (type === 'daisy') {
+        bloom.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshStandardMaterial({color: 0xfacc15, roughness: 0.9}))); const petalMat = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.3});
+        for(let i=0; i<8; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), petalMat); petal.scale.set(1, 0.2, 1.5);
+        const angle = (i / 8) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.4, 0, Math.sin(angle)*0.4); petal.rotation.y = -angle; bloom.add(petal); }
+    } else if (type === 'sunflower') {
+        const center = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16), new THREE.MeshStandardMaterial({color: 0x3e2723, roughness: 1.0})); center.rotation.x = Math.PI / 2; bloom.add(center);
+        const petalMat = new THREE.MeshStandardMaterial({color: 0xffd54f, roughness: 0.4});
+        for(let i=0; i<12; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), petalMat); petal.scale.set(1, 0.1, 2.0);
+        const angle = (i / 12) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.6, 0, Math.sin(angle)*0.6); petal.rotation.y = -angle; bloom.add(petal); }
+    } else if (type === 'tulip') {
+        const petalMat = new THREE.MeshStandardMaterial({color: 0xe91e63, roughness: 0.3, side: THREE.DoubleSide});
+        for(let i=0; i<5; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), petalMat); petal.scale.set(1, 1.5, 0.2);
+        const angle = (i / 5) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.15, 0.3, Math.sin(angle)*0.15); petal.rotation.y = -angle; petal.rotation.x = 0.2; bloom.add(petal);
+        }
+    } else {
+        const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.4, 0.8, 16, 1, true), new THREE.MeshStandardMaterial({color: 0x5c6bc0, roughness: 0.3, side: THREE.DoubleSide}));
+        bell.position.y = 0.2; bloom.add(bell);
+    }
+    bloom.rotation.x = 0.2 + Math.random()*0.2; flower.add(bloom); flower.position.copy(position); flower.scale.set(0.1, 0.1, 0.1); scene.add(flower);
+    items.push({ mesh: flower, scaleTarget: 1.0 + Math.random()*0.5, type: 'flower' });
+    logUI(`Dropped a beautiful ${type}! 🌸`);
+    timeSinceLastFlower = 0;
+}
+
+document.getElementById('btn-treat').addEventListener('click', () => {
+    if (state.stage === 'egg') return;
+    
+    // GDD: Adult Primary Food Button is instantly rewarding Sugar Water
+    if (state.stage === 'adult') {
+        state.stats.hunger = 100;
+        state.stats.energy = 100;
+        state.stats.happiness = 100;
+        logUI(`Gave Sugar Water! ⚡ ${state.name} is fully refreshed!`);
+        spawnFloatingEmoji('⚡', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
+        return; 
+    }
+
+    if (!checkHourlyLimit()) return;
+    if (state.isSleeping) return;
+
+    const treatPos = new THREE.Vector3((Math.random() - 0.5) * 15, 0, (Math.random() - 0.5) * 15);
+    
+    if (state.stage === 'larva') {
+        const treat = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0x555555, transparent: true, opacity: 0.9}));
+        treat.scale.set(1, 0.5, 1); treat.position.copy(treatPos); scene.add(treat); items.push({ mesh: treat, scaleTarget: 1.0, type: 'jelly' }); logUI("Dropped some nutritious Royal Jelly! 💧");
+    } else if (state.stage === 'child') {
+        dropFlower(treatPos);
+    }
+});
+
+let pointerDownPos = {x:0, y:0};
+window.addEventListener('pointerdown', (e) => {
+    pointerDownPos.x = e.clientX || (e.touches && e.touches[0].clientX);
+    pointerDownPos.y = e.clientY || (e.touches && e.touches[0].clientY);
+    mouse.x = (pointerDownPos.x / window.innerWidth) * 2 - 1; mouse.y = -(pointerDownPos.y / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    if (state.stage === 'egg') {
+        const beeIntersects = raycaster.intersectObject(beeHitBox);
+        if (beeIntersects.length > 0) { isDraggingEgg = true; return; }
+    }
+}, {passive: true});
+
+window.addEventListener('pointermove', (e) => {
+    const x = e.clientX || (e.touches && e.touches[0].clientX); const y = e.clientY || (e.touches && e.touches[0].clientY);
+    if (x === undefined || y === undefined) return;
+    mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    const hit = raycaster.ray.intersectPlane(interactionPlane, pointerIntersect);
+
+    if (hit && isDraggingEgg && state.stage === 'egg') {
+        beeMaster.position.x = hit.x; beeMaster.position.z = hit.z;
+        targetPosition.copy(beeMaster.position);
+    }
+});
+window.addEventListener('pointerleave', () => { pointerIntersect.set(0, 1000, 0); isDraggingEgg = false; });
+
+window.addEventListener('pointerup', (e) => {
+    if (isDraggingEgg) { isDraggingEgg = false; return; }
+    if (e.target.closest('.glass') || ['SELECT', 'INPUT', 'BUTTON'].includes(e.target.tagName)) return;
+    const x = e.clientX || (e.changedTouches && e.changedTouches[0].clientX); const y = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+    if (x === undefined || y === undefined || Math.hypot(x - pointerDownPos.x, y - pointerDownPos.y) > 30) return;
+
+    mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    if (isPlantingSeed) {
+        const intersectPoint = new THREE.Vector3();
+        const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
+        if (!hit) return;
+
+        const newSeed = { id: Date.now() + Math.random(), plantedAt: Date.now(), bloomed: false, position: {x: intersectPoint.x, y: 0, z: intersectPoint.z} };
+        state.seeds.push(newSeed); isPlantingSeed = false; document.body.classList.remove('cursor-plant'); renderSeeds(); return;
+    }
+
+    const boxIntersects = raycaster.intersectObject(boxHitBox);
+    if (boxIntersects.length > 0 && boxGroup.visible && (state.stage === 'adult' || state.stage === 'child')) {
+        state.hiveUnlocked = true; hiveGroup.visible = true; boxGroup.visible = false; buildHive();
+        logUI(`📦 You unpacked the Hive! ${state.name} has a home.`);
+        spawnFloatingEmoji('✨', boxGroup.position.clone().add(new THREE.Vector3(0,5,0))); return;
+    }
+
+    const hiveIntersects = raycaster.intersectObject(hiveHitBox);
+    if (hiveIntersects.length > 0 && state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child')) {
+        state.isSleeping = !state.isSleeping;
+        if (state.isSleeping) { targetPosition.set(0, 2, -17); logUI(`${state.name} is heading to the hive for a nap! 🌙`); }
+        else { targetPosition.set(0, 0, 0); logUI(`${state.name} is awake and ready to play! ☀️`); beeMaster.visible = true; }
+        return;
+    }
+
+    if (!state.isSleeping && beeMaster.visible && state.stage !== 'egg') {
+        const beeIntersects = raycaster.intersectObject(beeHitBox);
+        if (beeIntersects.length > 0) {
+            totalPets++; state.stats.happiness = Math.min(100, state.stats.happiness + 20); updateStatsUI();
+            if (totalPets % 5 === 0 && (state.stage === 'adult' || state.stage === 'child')) {
+                isDoingWaggle = true; waggleTimer = 0; logUI(`${state.name} is doing a joyful backflip! 🤸‍♀️🎵`); spawnFloatingEmoji('✨', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
             } else {
-                const treat = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshStandardMaterial({color: 0x00aaff, transparent: true, opacity: 0.8, roughness: 0.1}));
-                treat.scale.set(1, 1.5, 1); treat.position.copy(treatPos); scene.add(treat); items.push({ mesh: treat, scaleTarget: 1.0, type: 'treat' }); logUI("Dropped a Sugar Water treat! 💧");
+                logUI(`${state.name} loves being petted! ❤️`); spawnFloatingEmoji('❤️', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0))); isBeingPetted = true; petTimer = 2.0; beeVelocity.set(0,0,0);
             }
-        });
-        
-        let pointerDownPos = {x:0, y:0};
-        window.addEventListener('pointerdown', (e) => {
-            pointerDownPos.x = e.clientX || (e.touches && e.touches[0].clientX);
-            pointerDownPos.y = e.clientY || (e.touches && e.touches[0].clientY);
-            mouse.x = (pointerDownPos.x / window.innerWidth) * 2 - 1; mouse.y = -(pointerDownPos.y / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-
-            if (state.stage === 'egg') {
-                const beeIntersects = raycaster.intersectObject(beeHitBox);
-                if (beeIntersects.length > 0) { isDraggingEgg = true; return; }
-            }
-        }, {passive: true});
-        
-        window.addEventListener('pointermove', (e) => {
-            const x = e.clientX || (e.touches && e.touches[0].clientX); const y = e.clientY || (e.touches && e.touches[0].clientY);
-            if (x === undefined || y === undefined) return;
-            mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            
-            const hit = raycaster.ray.intersectPlane(interactionPlane, pointerIntersect);
-
-            if (hit && isDraggingEgg && state.stage === 'egg') {
-                beeMaster.position.x = hit.x; beeMaster.position.z = hit.z;
-                targetPosition.copy(beeMaster.position);
-            }
-        });
-        window.addEventListener('pointerleave', () => { pointerIntersect.set(0, 1000, 0); isDraggingEgg = false; });
-
-        window.addEventListener('pointerup', (e) => {
-            if (isDraggingEgg) { isDraggingEgg = false; return; }
-            if (e.target.closest('.glass') || ['SELECT', 'INPUT', 'BUTTON'].includes(e.target.tagName)) return;
-            const x = e.clientX || (e.changedTouches && e.changedTouches[0].clientX); const y = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
-            if (x === undefined || y === undefined || Math.hypot(x - pointerDownPos.x, y - pointerDownPos.y) > 30) return; 
-            
-            mouse.x = (x / window.innerWidth) * 2 - 1; mouse.y = -(y / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            
-            if (isPlantingSeed) {
-                const intersectPoint = new THREE.Vector3(); 
-                const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
-                if (!hit) return; 
-                
-                const newSeed = { id: Date.now() + Math.random(), plantedAt: Date.now(), bloomed: false, position: {x: intersectPoint.x, y: 0, z: intersectPoint.z} };
-                state.seeds.push(newSeed); isPlantingSeed = false; document.body.classList.remove('cursor-plant'); renderSeeds(); return;
-            }
-            
-            const boxIntersects = raycaster.intersectObject(boxHitBox);
-            if (boxIntersects.length > 0 && boxGroup.visible && (state.stage === 'adult' || state.stage === 'child')) {
-                state.hiveUnlocked = true; hiveGroup.visible = true; boxGroup.visible = false; buildHive();
-                logUI(`📦 You unpacked the Hive! ${state.name} has a home.`);
-                spawnFloatingEmoji('✨', boxGroup.position.clone().add(new THREE.Vector3(0,5,0))); return;
-            }
-            
-            const hiveIntersects = raycaster.intersectObject(hiveHitBox);
-            if (hiveIntersects.length > 0 && state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child')) {
-                state.isSleeping = !state.isSleeping;
-                if (state.isSleeping) { targetPosition.set(0, 2, -17); logUI(`${state.name} is heading to the hive for a nap! 🌙`); } 
-                else { targetPosition.set(0, 0, 0); logUI(`${state.name} is awake and ready to play! ☀️`); beeMaster.visible = true; }
-                return;
-            }
-            
-            if (!state.isSleeping && beeMaster.visible && state.stage !== 'egg') {
-                const beeIntersects = raycaster.intersectObject(beeHitBox);
-                if (beeIntersects.length > 0) {
-                    totalPets++; state.stats.happiness = Math.min(100, state.stats.happiness + 20); updateStatsUI();
-                    if (totalPets % 5 === 0 && (state.stage === 'adult' || state.stage === 'child')) {
-                        isDoingWaggle = true; waggleTimer = 0; logUI(`${state.name} is doing a joyful backflip! 🤸‍♀️🎵`); spawnFloatingEmoji('✨', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
-                    } else {
-                        logUI(`${state.name} loves being petted! ❤️`); spawnFloatingEmoji('❤️', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0))); isBeingPetted = true; petTimer = 2.0; beeVelocity.set(0,0,0);
-                    }
-                    return; 
-                }
-            }
-            
-            if (state.stage === 'egg' || state.stage === 'larva') return; 
-            
-            if (!checkHourlyLimit()) return;
-            
-            const intersectPoint = new THREE.Vector3(); 
-            const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
-            if (!hit) return; 
-            
-            const flowerTypes = ['daisy', 'sunflower', 'tulip', 'bluebell']; const type = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
-            const flower = new THREE.Group(); const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshStandardMaterial({color: 0x4ade80})); stem.position.y = 0.5; flower.add(stem); const bloom = new THREE.Group(); bloom.position.y = 1.0;
-            if (type === 'daisy') {
-                bloom.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshStandardMaterial({color: 0xfacc15, roughness: 0.9}))); const petalMat = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.3});
-                for(let i=0; i<8; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), petalMat); petal.scale.set(1, 0.2, 1.5); const angle = (i / 8) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.4, 0, Math.sin(angle)*0.4); petal.rotation.y = -angle; bloom.add(petal); }
-            } else if (type === 'sunflower') {
-                const center = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16), new THREE.MeshStandardMaterial({color: 0x3e2723, roughness: 1.0})); center.rotation.x = Math.PI / 2; bloom.add(center); const petalMat = new THREE.MeshStandardMaterial({color: 0xffd54f, roughness: 0.4});
-                for(let i=0; i<12; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), petalMat); petal.scale.set(1, 0.1, 2.0); const angle = (i / 12) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.6, 0, Math.sin(angle)*0.6); petal.rotation.y = -angle; bloom.add(petal); }
-            } else if (type === 'tulip') {
-                const petalMat = new THREE.MeshStandardMaterial({color: 0xe91e63, roughness: 0.3, side: THREE.DoubleSide});
-                for(let i=0; i<5; i++) { const petal = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), petalMat); petal.scale.set(1, 1.5, 0.2); const angle = (i / 5) * Math.PI * 2; petal.position.set(Math.cos(angle)*0.15, 0.3, Math.sin(angle)*0.15); petal.rotation.y = -angle; petal.rotation.x = 0.2; bloom.add(petal); }
-            } else { 
-                const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.4, 0.8, 16, 1, true), new THREE.MeshStandardMaterial({color: 0x5c6bc0, roughness: 0.3, side: THREE.DoubleSide})); bell.position.y = 0.2; bloom.add(bell);
-            }
-            bloom.rotation.x = 0.2 + Math.random()*0.2; flower.add(bloom); flower.position.copy(intersectPoint); flower.scale.set(0.1, 0.1, 0.1); scene.add(flower); items.push({ mesh: flower, scaleTarget: 1.0 + Math.random()*0.5, type: 'flower' });
-            logUI(`Planted a beautiful ${type}! 🌸`);
-            timeSinceLastFlower = 0; 
-        });
-
-        const clock = new THREE.Clock();
-        
-        let beeVelocity = new THREE.Vector3();
-        let statDecayTimer = 0;
-        let autoTimer = 0;
-        let lastSleepPrompt = 0;
-        let zzzTimer = 0; 
-        const targetRotationObj = new THREE.Object3D(); 
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const dt = Math.min(clock.getDelta(), 0.1); 
-            const time = clock.getElapsedTime();
-            timeSinceLastFlower += dt;
-            
-            if (isRaining) {
-                if (Math.random() < 0.5) { const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), new THREE.MeshBasicMaterial({color: 0x93c5fd, transparent: true, opacity: 0.6})); drop.position.set((Math.random()-0.5)*100, 40, (Math.random()-0.5)*100); scene.add(drop); rainParticles.push(drop); }
-                if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && state.hiveUnlocked) { targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true; }
-            }
-            for(let i = rainParticles.length - 1; i >= 0; i--) {
-                rainParticles[i].position.y -= 40 * dt; if (rainParticles[i].position.y < 0) { scene.remove(rainParticles[i]); rainParticles.splice(i, 1); }
-            }
-            
-            statDecayTimer += dt;
-            if(statDecayTimer > 1.0) {
-                statDecayTimer = 0;
-                if (state.stage !== 'egg') {
-                    if (state.isSleeping) {
-                        state.stats.energy = Math.min(100, state.stats.energy + 1.0);
-                        state.stats.tiredness = Math.max(0, state.stats.tiredness - 1.0);
-                        state.stats.hunger -= 0.005; // tiny drop overnight
-                        
-                        if (state.stats.nectar >= 1) { 
-                            state.stats.nectar -= 1; 
-                            state.stats.honeyJars += 0.5;
-                            if (Math.abs(state.stats.honeyJars % 1) < 0.49) spawnFloatingEmoji('🍯', hiveDoorTarget); 
-                        }
-                        
-                        if (state.stats.energy >= 100 && state.stats.tiredness <= 0 && state.stats.nectar <= 0) {
-                            state.isSleeping = false;
-                            targetPosition.set(0, 0, 0);
-                            beeMaster.visible = true;
-                            logUI(`${state.name} feels completely rested and is ready to play! ☀️`);
-                        }
-                    } else {
-                        state.stats.hunger -= 0.01; // Healthy drain (approx 36 pts per hour while open)
-                        if (state.stage === 'adult' || state.stage === 'child') {
-                            state.stats.energy -= 0.02; // Very slow natural drain
-                            state.stats.tiredness += 0.02; 
-                        }
-                        
-                        if (state.stats.hunger < 30 || state.stats.energy < 20) state.stats.happiness -= 0.5; 
-                        else if (state.stats.happiness < 100) state.stats.happiness += 0.1;
-                        
-                        if (state.stats.tiredness > 75 && time - lastSleepPrompt > 60 && (state.stage === 'adult' || state.stage === 'child')) { 
-                            logUI(`${state.name} is getting very tired. 🥱 Tap the hive for bedtime?`); 
-                            lastSleepPrompt = time; 
-                        }
-                    }
-
-                    if (state.stats.hunger <= 0) {
-                        state.stats.health -= 0.01; // Active health drain while starving
-                        if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
-                            logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
-                        }
-                        if (state.stats.health <= 0) {
-                            resetToEgg(`${state.name} fainted from hunger and reverted to an egg to heal!`); 
-                        }
-                    } else {
-                        state.stats.health = Math.min(100, state.stats.health + 0.1); 
-                    }
-
-                    if (!state.isSleeping && state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child')) {
-                        if (state.stats.nectar >= 30) { 
-                            logUI(`${state.name}'s pollen baskets are completely full! Returning to hive.`); 
-                            targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true; 
-                        } else if (state.stats.nectar > 0 && (state.stats.tiredness > 90 || timeSinceLastFlower > 120)) {
-                            logUI(`${state.name} is heading back to the hive to drop off her nectar!`); 
-                            targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true; 
-                        }
-                    }
-                } else {
-                    state.stats.energy = 100; state.stats.hunger = 100; state.stats.tiredness = 0; state.stats.happiness = 100; state.stats.health = 100;
-                }
-                updateStatsUI();
-            }
-
-            if (state.isSleeping && beeMaster.position.distanceTo(hiveDoorTarget) < 2.0) {
-                zzzTimer += dt; if (zzzTimer > 1.0) { const zTexts = ['Z', 'Zz', 'zZz', 'ZZzz', 'z', 'Zzz']; const sizes = ['20px', '28px', '36px', '24px']; spawnFloatingEmoji(zTexts[Math.floor(Math.random() * zTexts.length)], hiveDoorTarget, sizes[Math.floor(Math.random() * sizes.length)]); zzzTimer = 0; }
-            }
-            if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && beeVelocity.length() > 0.5 && Math.random() > 0.4) {
-                const color = new THREE.Color().setHSL((time * 0.5) % 1, 1, 0.6); const p = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.8})); p.position.copy(beeMaster.position); p.position.y -= 0.5; scene.add(p); trailParticles.push({mesh: p, life: 1.0});
-            }
-            for(let i = trailParticles.length - 1; i >= 0; i--) { let p = trailParticles[i]; p.life = Math.max(0, p.life - dt * 1.5); if (p.life <= 0) { scene.remove(p.mesh); trailParticles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life); } }
-            
-            if (state.friendsUnlocked.butterfly && butterflyGroup.visible) { butterflyGroup.position.x = 5 + Math.sin(time * 0.8) * 6; butterflyGroup.position.z = -12 + Math.cos(time * 0.6) * 5; butterflyGroup.position.y = 3 + Math.sin(time * 2.5) * 1.5; butterflyGroup.children[0].rotation.y = Math.sin(time * 20) * 0.8; butterflyGroup.children[1].rotation.y = Math.PI - Math.sin(time * 20) * 0.8; butterflyGroup.rotation.y = Math.atan2(Math.cos(time * 0.6), -Math.sin(time * 0.8)); }
-            if (state.friendsUnlocked.ladybug && ladybugGroup.visible) { ladybugGroup.position.x = Math.sin(time * 0.3) * 6; ladybugGroup.position.z = -20 + Math.cos(time * 0.3) * 6; ladybugGroup.rotation.y = -time * 0.3 + Math.PI; }
-            if (state.friendsUnlocked.caterpillar && caterpillarGroup.visible) { caterpillarGroup.position.z = 5 + Math.sin(time * 0.2) * 4; caterpillarGroup.position.x = -8 + Math.cos(time * 0.1) * 2; caterpillarGroup.rotation.y = Math.sin(time * 0.1) * 0.5; }
-            if (state.friendsUnlocked.dragonfly && dragonflyGroup.visible) { dragonflyGroup.position.x = Math.sin(time * 1.5) * 15; dragonflyGroup.position.z = Math.cos(time * 1.2) * 15; dragonflyGroup.position.y = 8 + Math.sin(time * 4) * 2; dragonflyGroup.rotation.y = -time * 1.5; dragonflyGroup.children[1].rotation.z = Math.sin(time * 50) * 0.5; dragonflyGroup.children[2].rotation.z = -Math.sin(time * 50) * 0.5; }
-            if (state.friendsUnlocked.firefly && fireflyGroup.visible) { fireflyGroup.position.x = -5 + Math.sin(time * 1.2) * 5; fireflyGroup.position.z = -10 + Math.cos(time * 0.8) * 4; fireflyGroup.position.y = 4 + Math.sin(time * 3) * 1.5; fireflyGroup.children[1].material.emissiveIntensity = isNightTime ? (0.5 + Math.sin(time * 5) * 0.5) : 0; }
-            childBees.forEach((child, i) => { const angle = time + (i * Math.PI/2); child.position.x = beeMaster.position.x + Math.cos(angle)*3; child.position.z = beeMaster.position.z + Math.sin(angle)*3; child.position.y = beeMaster.position.y - 1; });
-            
-            const targetTreeScale = Math.min(3.0, 0.5 + (state.stats.honeyJars / 2)); 
-            treeMeshes.forEach(tree => { tree.scale.lerp(new THREE.Vector3(targetTreeScale, targetTreeScale, targetTreeScale), 0.01); });
-
-            if (isBeingPetted) { petTimer -= dt; if (petTimer <= 0) isBeingPetted = false; }
-            if (isDoingWaggle) { waggleTimer += dt; if (waggleTimer > 2.5) { isDoingWaggle = false; beeMaster.rotation.set(0,0,0); } }
-            items.forEach(item => { if (item.mesh.scale.x < item.scaleTarget) item.mesh.scale.lerp(new THREE.Vector3(item.scaleTarget, item.scaleTarget, item.scaleTarget), 0.1); });
-            
-            const distToPointer = beeMaster.position.distanceTo(pointerIntersect);
-            let interactingWithPointer = false;
-            
-            if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && !isDraggingEgg && distToPointer < 4) {
-                interactingWithPointer = true;
-                targetRotationObj.position.copy(beeMaster.position);
-                targetRotationObj.lookAt(new THREE.Vector3(pointerIntersect.x, beeMaster.position.y, pointerIntersect.z));
-                beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.1);
-                beeVelocity.lerp(new THREE.Vector3(0,0,0), 0.1); 
-            }
-
-            const isHidingFromRain = isRaining && (state.stage === 'adult' || state.stage === 'child');
-            if (!state.isSleeping && !isBeingPetted && !isDoingWaggle && state.stats.nectar < 30 && !isHidingFromRain && !interactingWithPointer && !isDraggingEgg) {
-                autoTimer -= dt;
-                if (autoTimer <= 0) {
-                    if (items.length > 0) {
-                        let priorityItem = state.stage === 'larva' ? (items.find(i => i.type === 'jelly') || items[0]) : (items.find(i => i.type === 'crystal') || items.find(i => i.type === 'treat') || items[0]);
-                        targetPosition.copy(priorityItem.mesh.position); autoTimer = 3.0;
-                    } else { targetPosition.set((Math.random() - 0.5) * 40, 0, (Math.random() - 0.5) * 40); autoTimer = 2.0 + Math.random() * 3.0; }
-                }
-            }
-            
-            const direction = new THREE.Vector3().subVectors(targetPosition, beeMaster.position);
-            if (state.stage === 'larva' || state.stage === 'egg') direction.y = 0; else if (!state.isSleeping) direction.y = 0; 
-            const distance = direction.length();
-            let maxSpeed = state.isSleeping ? 10.0 : 15.0; 
-            if (state.stage === 'larva') maxSpeed = 3.0; 
-            if (state.stage === 'egg') maxSpeed = 0.0;
-            
-            const speedMultiplier = (state.stats.energy/100) * (state.stats.hunger/100);
-            const activeSpeed = Math.max(maxSpeed * 0.2, maxSpeed * speedMultiplier);
-            if (distance > 0.5 && !isBeingPetted && !isDoingWaggle && !interactingWithPointer && !isDraggingEgg) { direction.normalize(); beeVelocity.lerp(direction.multiplyScalar(activeSpeed), 0.1); } 
-            else if (!isDraggingEgg) { beeVelocity.lerp(new THREE.Vector3(0,0,0), 0.2); }
-            if (!isDraggingEgg) beeMaster.position.addScaledVector(beeVelocity, dt);
-            
-            const currentSpeed = beeVelocity.length();
-            
-            if (state.isSleeping && distance < 0.5 && (state.stage === 'adult' || state.stage === 'child')) { 
-                beeMaster.visible = false; 
-            } else {
-                beeMaster.visible = true;
-                if (isDoingWaggle) { beeMaster.rotation.y = Math.sin(time * 25) * 0.4; beeMaster.position.x += Math.sin(time * 5) * 0.05; beeMaster.position.z += Math.cos(time * 10) * 0.05; } 
-                else if (isBeingPetted) { 
-                    targetRotationObj.position.copy(beeMaster.position); 
-                    const euler = new THREE.Euler().setFromQuaternion(beeMaster.quaternion); 
-                    targetRotationObj.rotation.set(0, euler.y + Math.sin(time * 20) * 0.1, 0); 
-                    beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.3); 
-                } 
-                else if (currentSpeed > 0.1 && !interactingWithPointer) { 
-                    const lookPos = beeMaster.position.clone().add(beeVelocity); 
-                    targetRotationObj.position.copy(beeMaster.position); 
-                    targetRotationObj.lookAt(lookPos); 
-                    if (state.stage === 'adult' || state.stage === 'child') {
-                        const tilt = speedMultiplier < 0.3 ? -0.3 : 0.2; 
-                        targetRotationObj.rotateX(tilt); 
-                    }
-                    beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.15); 
-                } 
-                else if (!interactingWithPointer) { 
-                    targetRotationObj.position.copy(beeMaster.position); 
-                    const euler = new THREE.Euler().setFromQuaternion(beeMaster.quaternion); 
-                    targetRotationObj.rotation.set(0, euler.y, 0); 
-                    beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.1); 
-                }
-            }
-            
-            if ((state.stage === 'adult' || state.stage === 'child') && !state.isSleeping) {
-                if (!isDoingWaggle && !interactingWithPointer && !isDraggingEgg) beeGroup.position.y = 5.0 + Math.sin(time * 3) * 0.5;
-                let flapSpeed = currentSpeed > 1 || isDoingWaggle ? 100 : 60; if (speedMultiplier < 0.3) flapSpeed = 20; 
-                wingPivots.forEach(w => w.pivot.rotation.z = (Math.sin(time * flapSpeed) * 0.8) * w.sign);
-                const targetLegTuck = (currentSpeed > 3 && !isBeingPetted && !isDoingWaggle && !interactingWithPointer) ? -0.4 : 0.1;
-                legs.forEach((leg, index) => { leg.rotation.x += (targetLegTuck - leg.rotation.x) * 0.1; leg.rotation.z += Math.sin(time * 5 + index) * 0.005; });
-                const targetPollenSize = Math.max(0.001, Math.min(1.5, state.stats.nectar * 0.2));
-                pollenBaskets.forEach(basket => { basket.visible = state.stats.nectar > 0; basket.scale.lerp(new THREE.Vector3(targetPollenSize, targetPollenSize, targetPollenSize), 0.1); });
-            } else if (state.stage === 'larva') { 
-                beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.3; 
-            } else if (state.stage === 'egg') {
-                beeGroup.position.y = 1.0 + Math.sin(time * 3) * 0.3; 
-                beeGroup.rotation.z = Math.sin(time * 4) * 0.1;
-                beeGroup.rotation.x = Math.sin(time * 3.5) * 0.1;
-            }
-            
-            for (let i = items.length - 1; i >= 0; i--) {
-                const item = items[i]; const dist2D = Math.hypot(beeMaster.position.x - item.mesh.position.x, beeMaster.position.z - item.mesh.position.z);
-                if (state.stage !== 'egg' && dist2D < 3.0 && !state.isSleeping && !isBeingPetted && !isDoingWaggle && !isDraggingEgg) { 
-                    scene.remove(item.mesh); items.splice(i, 1);
-                    if (item.type === 'jelly' && state.stage === 'larva') { 
-                        state.totalFood += 1; state.larvaFood += 1;
-                        state.stats.hunger = Math.min(100, state.stats.hunger + 20); 
-                        state.stats.energy = Math.min(100, state.stats.energy + 20); 
-                        logUI(`The larva ate nutritious Royal Jelly! (${state.larvaFood}/30) 🐛`); 
-                    }
-                    else if (item.type === 'treat') { 
-                        state.stats.hunger = Math.min(100, state.stats.hunger + 50); 
-                        state.stats.energy = Math.min(100, state.stats.energy + 50); 
-                        state.stats.happiness = Math.min(100, state.stats.happiness + 20); 
-                        logUI(`${state.name} guzzled the sugar water! ⚡`); 
-                        spawnFloatingEmoji('⚡', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0))); 
-                    } 
-                    else if (state.stage === 'adult' || state.stage === 'child') {
-                        state.totalFood += 1; 
-                        state.stats.hunger = Math.min(100, state.stats.hunger + 30); 
-                        state.stats.happiness = Math.min(100, state.stats.happiness + 5);
-                        
-                        state.stats.energy = Math.max(0, state.stats.energy - 10);
-                        state.stats.tiredness = Math.min(100, state.stats.tiredness + 10);
-                        
-                        if (item.type === 'crystal') { 
-                            state.stats.nectar += 15; state.totalNectarGathered += 15; state.seeds = state.seeds.filter(s => s.id !== item.seedId); 
-                            if (state.stage === 'child') state.childNectar += 15;
-                            logUI(`AMAZING! ${state.name} ate the Crystal Bloom! 💎`); 
-                            spawnFloatingEmoji('💎', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0))); 
-                            isDoingWaggle = true; waggleTimer = 0; 
-                        } 
-                        else { 
-                            state.stats.nectar += 1; state.totalNectarGathered += 1;
-                            if (state.stage === 'child') {
-                                state.childNectar += 1;
-                                logUI(`${state.name} is munching on flowers to grow! (${state.childNectar}/60) 🌸`);
-                            } else {
-                                logUI(`${state.name} gathered nectar! 🌸`); 
-                            }
-                        }
-                    }
-                    updateStatsUI(); if (!isDoingWaggle && (state.stage === 'adult' || state.stage === 'child')) beeMaster.rotateY(Math.PI * 2); 
-                }
-            }
-            updateAudioBuzz(currentSpeed / maxSpeed); renderer.render(scene, camera);
+            return;
         }
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-        
-        isSceneReady = true; rebuildBeeMesh(); applyLoadedData(state); renderSeeds(); setTimeout(animate, 100);
-    </script>
+    }
+
+    // Dropping Flowers via Screen Tap for Child / Adult Stages
+    if (state.stage === 'egg' || state.stage === 'larva') return;
+
+    if (state.stage === 'child') {
+        if (!checkHourlyLimit()) return;
+    }
+
+    const intersectPoint = new THREE.Vector3();
+    const hit = raycaster.ray.intersectPlane(interactionPlane, intersectPoint);
+    if (!hit) return;
+
+    dropFlower(intersectPoint);
+});
+
+const clock = new THREE.Clock();
+
+let beeVelocity = new THREE.Vector3();
+let statDecayTimer = 0;
+let autoTimer = 0;
+let lastSleepPrompt = 0;
+let zzzTimer = 0;
+const targetRotationObj = new THREE.Object3D();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.1);
+    const time = clock.getElapsedTime();
+    timeSinceLastFlower += dt;
+
+    if (isRaining) {
+        if (Math.random() < 0.5) { const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), new THREE.MeshBasicMaterial({color: 0x93c5fd, transparent: true, opacity: 0.6}));
+        drop.position.set((Math.random()-0.5)*100, 40, (Math.random()-0.5)*100); scene.add(drop); rainParticles.push(drop); }
+        if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && state.hiveUnlocked) { targetPosition.copy(hiveDoorTarget);
+        if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true; }
+    }
+    for(let i = rainParticles.length - 1; i >= 0; i--) {
+        rainParticles[i].position.y -= 40 * dt; if (rainParticles[i].position.y < 0) { scene.remove(rainParticles[i]); rainParticles.splice(i, 1); }
+    }
+
+    statDecayTimer += dt;
+    if(statDecayTimer > 1.0) {
+        statDecayTimer = 0;
+        if (state.stage !== 'egg') {
+            if (state.isSleeping) {
+                state.stats.energy = Math.min(100, state.stats.energy + 1.0);
+                state.stats.tiredness = Math.max(0, state.stats.tiredness - 1.0);
+                state.stats.hunger -= 0.005; // tiny drop overnight
+
+                if (state.stats.nectar >= 1) {
+                    state.stats.nectar -= 1;
+                    state.stats.honeyJars += 0.5;
+                    if (Math.abs(state.stats.honeyJars % 1) < 0.49) spawnFloatingEmoji('🍯', hiveDoorTarget);
+                }
+
+                if (state.stats.energy >= 100 && state.stats.tiredness <= 0 && state.stats.nectar <= 0) {
+                    state.isSleeping = false;
+                    targetPosition.set(0, 0, 0);
+                    beeMaster.visible = true;
+                    logUI(`${state.name} feels completely rested and is ready to play! ☀️`);
+                }
+            } else {
+                state.stats.hunger -= 0.01; 
+                if (state.stage === 'adult' || state.stage === 'child') {
+                    state.stats.energy -= 0.02; 
+                    state.stats.tiredness += 0.02;
+                }
+
+                if (state.stats.hunger < 30 || state.stats.energy < 20) state.stats.happiness -= 0.5;
+                else if (state.stats.happiness < 100) state.stats.happiness += 0.1;
+
+                if (state.stats.tiredness > 75 && time - lastSleepPrompt > 60 && (state.stage === 'adult' || state.stage === 'child')) {
+                    logUI(`${state.name} is getting very tired. 🥱 Tap the hive for bedtime?`);
+                    lastSleepPrompt = time;
+                }
+            }
+
+            if (state.stats.hunger <= 0) {
+                state.stats.health -= 0.01; 
+                if (Math.floor(state.stats.health) === 40 || Math.floor(state.stats.health) === 20) {
+                    logUI(`⚠️ WARNING: ${state.name} is starving! Please feed her!`);
+                }
+                if (state.stats.health <= 0) {
+                    resetToEgg(`${state.name} fainted from hunger and reverted to an egg to heal!`);
+                }
+            } else {
+                state.stats.health = Math.min(100, state.stats.health + 0.1);
+            }
+
+            if (!state.isSleeping && state.hiveUnlocked && (state.stage === 'adult' || state.stage === 'child')) {
+                if (state.stats.nectar >= 30) {
+                    logUI(`${state.name}'s pollen baskets are completely full! Returning to hive.`);
+                    targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true;
+                } else if (state.stats.nectar > 0 && (state.stats.tiredness > 90 || timeSinceLastFlower > 120)) {
+                    logUI(`${state.name} is heading back to the hive to drop off her nectar!`);
+                    targetPosition.copy(hiveDoorTarget); if (beeMaster.position.distanceTo(hiveDoorTarget) < 1.0) state.isSleeping = true;
+                }
+            }
+        } else {
+            state.stats.energy = 100; state.stats.hunger = 100; state.stats.tiredness = 0; state.stats.happiness = 100; state.stats.health = 100;
+        }
+        updateStatsUI();
+    }
+
+    if (state.isSleeping && beeMaster.position.distanceTo(hiveDoorTarget) < 2.0) {
+        zzzTimer += dt; if (zzzTimer > 1.0) { const zTexts = ['Z', 'Zz', 'zZz', 'ZZzz', 'z', 'Zzz'];
+        const sizes = ['20px', '28px', '36px', '24px']; spawnFloatingEmoji(zTexts[Math.floor(Math.random() * zTexts.length)], hiveDoorTarget, sizes[Math.floor(Math.random() * sizes.length)]); zzzTimer = 0; }
+    }
+    if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && beeVelocity.length() > 0.5 && Math.random() > 0.4) {
+        const color = new THREE.Color().setHSL((time * 0.5) % 1, 1, 0.6);
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.8})); p.position.copy(beeMaster.position); p.position.y -= 0.5; scene.add(p);
+        trailParticles.push({mesh: p, life: 1.0});
+    }
+    for(let i = trailParticles.length - 1; i >= 0; i--) { let p = trailParticles[i];
+        p.life = Math.max(0, p.life - dt * 1.5); if (p.life <= 0) { scene.remove(p.mesh); trailParticles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life);
+    } }
+
+    if (state.friendsUnlocked.butterfly && butterflyGroup.visible) { butterflyGroup.position.x = 5 + Math.sin(time * 0.8) * 6;
+        butterflyGroup.position.z = -12 + Math.cos(time * 0.6) * 5; butterflyGroup.position.y = 3 + Math.sin(time * 2.5) * 1.5;
+        butterflyGroup.children[0].rotation.y = Math.sin(time * 20) * 0.8; butterflyGroup.children[1].rotation.y = Math.PI - Math.sin(time * 20) * 0.8;
+        butterflyGroup.rotation.y = Math.atan2(Math.cos(time * 0.6), -Math.sin(time * 0.8)); }
+    if (state.friendsUnlocked.ladybug && ladybugGroup.visible) { ladybugGroup.position.x = Math.sin(time * 0.3) * 6;
+        ladybugGroup.position.z = -20 + Math.cos(time * 0.3) * 6; ladybugGroup.rotation.y = -time * 0.3 + Math.PI; }
+    if (state.friendsUnlocked.caterpillar && caterpillarGroup.visible) { caterpillarGroup.position.z = 5 + Math.sin(time * 0.2) * 4;
+        caterpillarGroup.position.x = -8 + Math.cos(time * 0.1) * 2; caterpillarGroup.rotation.y = Math.sin(time * 0.1) * 0.5; }
+    if (state.friendsUnlocked.dragonfly && dragonflyGroup.visible) { dragonflyGroup.position.x = Math.sin(time * 1.5) * 15; dragonflyGroup.position.z = Math.cos(time * 1.2) * 15;
+        dragonflyGroup.position.y = 8 + Math.sin(time * 4) * 2; dragonflyGroup.rotation.y = -time * 1.5;
+        dragonflyGroup.children[1].rotation.z = Math.sin(time * 50) * 0.5; dragonflyGroup.children[2].rotation.z = -Math.sin(time * 50) * 0.5; }
+    if (state.friendsUnlocked.firefly && fireflyGroup.visible) { fireflyGroup.position.x = -5 + Math.sin(time * 1.2) * 5;
+        fireflyGroup.position.z = -10 + Math.cos(time * 0.8) * 4; fireflyGroup.position.y = 4 + Math.sin(time * 3) * 1.5;
+        fireflyGroup.children[1].material.emissiveIntensity = isNightTime ? (0.5 + Math.sin(time * 5) * 0.5) : 0; }
+    childBees.forEach((child, i) => { const angle = time + (i * Math.PI/2); child.position.x = beeMaster.position.x + Math.cos(angle)*3; child.position.z = beeMaster.position.z + Math.sin(angle)*3; child.position.y = beeMaster.position.y - 1; });
+
+    const targetTreeScale = Math.min(3.0, 0.5 + (state.stats.honeyJars / 2));
+    treeMeshes.forEach(tree => { tree.scale.lerp(new THREE.Vector3(targetTreeScale, targetTreeScale, targetTreeScale), 0.01); });
+
+    if (isBeingPetted) { petTimer -= dt; if (petTimer <= 0) isBeingPetted = false; }
+    if (isDoingWaggle) { waggleTimer += dt; if (waggleTimer > 2.5) { isDoingWaggle = false; beeMaster.rotation.set(0,0,0); } }
+    items.forEach(item => { if (item.mesh.scale.x < item.scaleTarget) item.mesh.scale.lerp(new THREE.Vector3(item.scaleTarget, item.scaleTarget, item.scaleTarget), 0.1); });
+
+    const distToPointer = beeMaster.position.distanceTo(pointerIntersect);
+    let interactingWithPointer = false;
+
+    if (!state.isSleeping && (state.stage === 'adult' || state.stage === 'child') && !isDraggingEgg && distToPointer < 4) {
+        interactingWithPointer = true;
+        targetRotationObj.position.copy(beeMaster.position);
+        targetRotationObj.lookAt(new THREE.Vector3(pointerIntersect.x, beeMaster.position.y, pointerIntersect.z));
+        beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.1);
+        beeVelocity.lerp(new THREE.Vector3(0,0,0), 0.1);
+    }
+
+    const isHidingFromRain = isRaining && (state.stage === 'adult' || state.stage === 'child');
+    if (!state.isSleeping && !isBeingPetted && !isDoingWaggle && state.stats.nectar < 30 && !isHidingFromRain && !interactingWithPointer && !isDraggingEgg) {
+        autoTimer -= dt;
+        if (autoTimer <= 0) {
+            if (items.length > 0) {
+                let priorityItem = state.stage === 'larva' ? (items.find(i => i.type === 'jelly') || items[0]) : (items.find(i => i.type === 'crystal') || items.find(i => i.type === 'treat') || items[0]);
+                targetPosition.copy(priorityItem.mesh.position); autoTimer = 3.0;
+            } else { targetPosition.set((Math.random() - 0.5) * 40, 0, (Math.random() - 0.5) * 40);
+            autoTimer = 2.0 + Math.random() * 3.0; }
+        }
+    }
+
+    const direction = new THREE.Vector3().subVectors(targetPosition, beeMaster.position);
+    if (state.stage === 'larva' || state.stage === 'egg') direction.y = 0; else if (!state.isSleeping) direction.y = 0;
+    const distance = direction.length();
+    let maxSpeed = state.isSleeping ? 10.0 : 15.0;
+    if (state.stage === 'larva') maxSpeed = 3.0;
+    if (state.stage === 'egg') maxSpeed = 0.0;
+
+    const speedMultiplier = (state.stats.energy/100) * (state.stats.hunger/100);
+    const activeSpeed = Math.max(maxSpeed * 0.2, maxSpeed * speedMultiplier);
+    if (distance > 0.5 && !isBeingPetted && !isDoingWaggle && !interactingWithPointer && !isDraggingEgg) { direction.normalize(); beeVelocity.lerp(direction.multiplyScalar(activeSpeed), 0.1); }
+    else if (!isDraggingEgg) { beeVelocity.lerp(new THREE.Vector3(0,0,0), 0.2); }
+    if (!isDraggingEgg) beeMaster.position.addScaledVector(beeVelocity, dt);
+
+    const currentSpeed = beeVelocity.length();
+
+    if (state.isSleeping && distance < 0.5 && (state.stage === 'adult' || state.stage === 'child')) {
+        beeMaster.visible = false;
+    } else {
+        beeMaster.visible = true;
+        if (isDoingWaggle) { beeMaster.rotation.y = Math.sin(time * 25) * 0.4; beeMaster.position.x += Math.sin(time * 5) * 0.05;
+        beeMaster.position.z += Math.cos(time * 10) * 0.05; }
+        else if (isBeingPetted) {
+            targetRotationObj.position.copy(beeMaster.position);
+            const euler = new THREE.Euler().setFromQuaternion(beeMaster.quaternion);
+            targetRotationObj.rotation.set(0, euler.y + Math.sin(time * 20) * 0.1, 0);
+            beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.3);
+        }
+        else if (currentSpeed > 0.1 && !interactingWithPointer) {
+            const lookPos = beeMaster.position.clone().add(beeVelocity);
+            targetRotationObj.position.copy(beeMaster.position);
+            targetRotationObj.lookAt(lookPos);
+            if (state.stage === 'adult' || state.stage === 'child') {
+                const tilt = speedMultiplier < 0.3 ? -0.3 : 0.2;
+                targetRotationObj.rotateX(tilt);
+            }
+            beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.15);
+        }
+        else if (!interactingWithPointer) {
+            targetRotationObj.position.copy(beeMaster.position);
+            const euler = new THREE.Euler().setFromQuaternion(beeMaster.quaternion);
+            targetRotationObj.rotation.set(0, euler.y, 0);
+            beeMaster.quaternion.slerp(targetRotationObj.quaternion, 0.1);
+        }
+    }
+
+    if ((state.stage === 'adult' || state.stage === 'child') && !state.isSleeping) {
+        if (!isDoingWaggle && !interactingWithPointer && !isDraggingEgg) beeGroup.position.y = 5.0 + Math.sin(time * 3) * 0.5;
+        let flapSpeed = currentSpeed > 1 || isDoingWaggle ? 100 : 60; if (speedMultiplier < 0.3) flapSpeed = 20;
+        wingPivots.forEach(w => w.pivot.rotation.z = (Math.sin(time * flapSpeed) * 0.8) * w.sign);
+        const targetLegTuck = (currentSpeed > 3 && !isBeingPetted && !isDoingWaggle && !interactingWithPointer) ? -0.4 : 0.1;
+        legs.forEach((leg, index) => { leg.rotation.x += (targetLegTuck - leg.rotation.x) * 0.1; leg.rotation.z += Math.sin(time * 5 + index) * 0.005; });
+        const targetPollenSize = Math.max(0.001, Math.min(1.5, state.stats.nectar * 0.2));
+        pollenBaskets.forEach(basket => { basket.visible = state.stats.nectar > 0; basket.scale.lerp(new THREE.Vector3(targetPollenSize, targetPollenSize, targetPollenSize), 0.1); });
+    } else if (state.stage === 'larva') {
+        beeGroup.position.y = 0.5 + Math.abs(Math.sin(time * 5)) * 0.3;
+    } else if (state.stage === 'egg') {
+        beeGroup.position.y = 1.0 + Math.sin(time * 3) * 0.3;
+        beeGroup.rotation.z = Math.sin(time * 4) * 0.1;
+        beeGroup.rotation.x = Math.sin(time * 3.5) * 0.1;
+    }
+
+    // Logic strictly handling the physical feeding increments needed for the Game Design Document
+    for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i]; const dist2D = Math.hypot(beeMaster.position.x - item.mesh.position.x, beeMaster.position.z - item.mesh.position.z);
+        if (state.stage !== 'egg' && dist2D < 3.0 && !state.isSleeping && !isBeingPetted && !isDoingWaggle && !isDraggingEgg) {
+            scene.remove(item.mesh); items.splice(i, 1);
+            
+            if (item.type === 'jelly' && state.stage === 'larva') {
+                state.dailyFeeds += 1; 
+                state.totalFood += 1;
+                state.stats.hunger = Math.min(100, state.stats.hunger + 20);
+                state.stats.energy = Math.min(100, state.stats.energy + 20);
+                logUI(`The larva ate nutritious Royal Jelly! (${state.dailyFeeds}/30 for Day ${state.larvaDay}) 🐛`);
+                calculateStage(); // Important to check if they instantly morph on Day 3!
+            }
+            else if (state.stage === 'child' || state.stage === 'adult') {
+                state.totalFood += 1;
+                state.stats.hunger = Math.min(100, state.stats.hunger + 30);
+                state.stats.happiness = Math.min(100, state.stats.happiness + 5);
+                state.stats.energy = Math.max(0, state.stats.energy - 10);
+                state.stats.tiredness = Math.min(100, state.stats.tiredness + 10);
+
+                if (item.type === 'crystal') {
+                    state.stats.nectar += 15; state.totalNectarGathered += 15; state.seeds = state.seeds.filter(s => s.id !== item.seedId);
+                    logUI(`AMAZING! ${state.name} ate the Crystal Bloom! 💎`);
+                    spawnFloatingEmoji('💎', beeMaster.position.clone().add(new THREE.Vector3(0, 3, 0)));
+                    isDoingWaggle = true; waggleTimer = 0;
+                }
+                else {
+                    state.stats.nectar += 1; state.totalNectarGathered += 1;
+                    if (state.stage === 'child') {
+                        state.dailyFeeds += 1;
+                        logUI(`${state.name} is munching on flowers to grow! (${state.dailyFeeds}/30 for Day ${state.childDay}) 🌸`);
+                    } else {
+                        logUI(`${state.name} gathered nectar! 🌸`);
+                    }
+                }
+            }
+            updateStatsUI(); if (!isDoingWaggle && (state.stage === 'adult' || state.stage === 'child')) beeMaster.rotateY(Math.PI * 2);
+        }
+    }
+    updateAudioBuzz(currentSpeed / maxSpeed); renderer.render(scene, camera);
+}
+window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+isSceneReady = true; rebuildBeeMesh(); applyLoadedData(state); renderSeeds(); setTimeout(animate, 100);
+</script>
 </body>
 </html>
